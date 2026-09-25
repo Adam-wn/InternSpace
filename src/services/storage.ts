@@ -209,14 +209,27 @@ export function registerUser(params: {
 }): { success: boolean; user?: User; error?: string } {
   const users = getUsers();
   if (params.role === 'admin') {
-    return {
-      success: false,
-      error: `Pendaftaran akun Admin tidak diizinkan. Hak akses Admin hanya untuk pemilik sistem (${SYSTEM_ADMIN_EMAIL}).`,
-    };
+    if (params.email.trim().toLowerCase() !== SYSTEM_ADMIN_EMAIL.toLowerCase()) {
+      return {
+        success: false,
+        error: `Pendaftaran Admin ditolak: Peran Admin hanya diizinkan khusus untuk email pemilik sistem (${SYSTEM_ADMIN_EMAIL}).`,
+      };
+    }
   }
-  const emailExists = users.some((u) => u.email.toLowerCase() === params.email.toLowerCase());
+
+  const emailExists = users.some((u) => u.email.toLowerCase() === params.email.trim().toLowerCase());
   if (emailExists) {
-    return { success: false, error: 'Email sudah terdaftar. Silakan gunakan email lain atau login.' };
+    if (params.role === 'admin' && params.email.trim().toLowerCase() === SYSTEM_ADMIN_EMAIL.toLowerCase()) {
+      const adminUser = users.find((u) => u.email.toLowerCase() === SYSTEM_ADMIN_EMAIL.toLowerCase());
+      if (adminUser) {
+        if (params.nama) adminUser.nama = params.nama;
+        if (params.password) adminUser.password = params.password;
+        adminUser.role = 'admin';
+        setItem(STORAGE_KEYS.USERS, users);
+        return { success: true, user: adminUser };
+      }
+    }
+    return { success: false, error: 'Email sudah terdaftar. Silakan gunakan email lain atau beralih ke tab Masuk.' };
   }
 
   const newUserId = `user-${params.role.substring(0, 4)}-${Date.now()}`;

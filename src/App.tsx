@@ -258,8 +258,8 @@ export default function App() {
                     Silakan masuk terlebih dahulu untuk mengakses portal dan fitur sesuai peran Anda. Pilih peran akun Anda di bawah ini:
                   </p>
 
-                  {/* 3 ROLE ENTRY CARDS */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+                  {/* 4 ROLE ENTRY CARDS */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
                     {/* Siswa SMA / SMK */}
                     <button
                       type="button"
@@ -322,6 +322,31 @@ export default function App() {
                       </div>
                       <div className="mt-3 text-xs font-bold text-sky-400 flex items-center gap-1">
                         <span>Masuk Portal Perusahaan</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </div>
+                    </button>
+
+                    {/* Admin Utama (Khusus Pemilik) */}
+                    <button
+                      type="button"
+                      id="guest-role-admin"
+                      onClick={() => handleOpenAuth('login', 'admin')}
+                      className="p-4 rounded-2xl bg-slate-800/80 hover:bg-purple-950/40 border border-slate-700 hover:border-purple-500 text-left transition-all group cursor-pointer"
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                        <ShieldCheck className="w-5 h-5" />
+                      </div>
+                      <div className="flex items-center gap-1.5 font-bold text-sm text-white group-hover:text-purple-300 transition-colors">
+                        <span>Admin Utama</span>
+                        <span className="text-[9px] bg-purple-500/30 text-purple-300 px-1.5 py-0.5 rounded font-bold border border-purple-500/30">
+                          Khusus
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-slate-400 mt-1 leading-snug">
+                        Portal verifikasi perusahaan, moderasi lowongan, & pantau sistem (khusus akun Anda).
+                      </div>
+                      <div className="mt-3 text-xs font-bold text-purple-400 flex items-center gap-1">
+                        <span>Masuk Portal Admin</span>
                         <ArrowRight className="w-3.5 h-3.5" />
                       </div>
                     </button>
