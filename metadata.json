@@ -1,0 +1,7 @@
+{
+  "name": "InternSpace",
+  "description": "Platform Manajemen Magang Terpadu untuk Mahasiswa, Perusahaan, dan Admin",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+

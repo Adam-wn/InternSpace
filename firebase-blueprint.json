@@ -1,0 +1,506 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User account information and system role",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique user ID (auth uid)"
+        },
+        "nama": {
+          "type": "string",
+          "description": "Full name of the user",
+          "maxLength": 100
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the user",
+          "format": "email",
+          "maxLength": 150
+        },
+        "role": {
+          "type": "string",
+          "description": "User role in the system",
+          "enum": ["mahasiswa", "perusahaan", "admin"]
+        },
+        "avatarUrl": {
+          "type": "string",
+          "description": "Profile photo or avatar image URL",
+          "maxLength": 1000
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Creation timestamp in ISO format"
+        },
+        "isBlocked": {
+          "type": "boolean",
+          "description": "Whether the account is deactivated by an administrator"
+        },
+        "statusAktif": {
+          "type": "string",
+          "description": "Account status",
+          "enum": ["aktif", "diblokir"]
+        }
+      },
+      "required": ["id", "nama", "email", "role", "createdAt"]
+    },
+    "StudentProfile": {
+      "title": "StudentProfile",
+      "description": "Detailed academic and career profile of student interns",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "User ID linking to user account"
+        },
+        "nama": {
+          "type": "string",
+          "description": "Full name of the student",
+          "maxLength": 100
+        },
+        "universitas": {
+          "type": "string",
+          "description": "University name",
+          "maxLength": 150
+        },
+        "jurusan": {
+          "type": "string",
+          "description": "Study major or department",
+          "maxLength": 100
+        },
+        "semester": {
+          "type": "number",
+          "description": "Current academic semester"
+        },
+        "noHp": {
+          "type": "string",
+          "description": "WhatsApp or mobile contact number",
+          "maxLength": 30
+        },
+        "fotoUrl": {
+          "type": "string",
+          "description": "Student headshot URL",
+          "maxLength": 1000
+        },
+        "cvUrl": {
+          "type": "string",
+          "description": "CV/Resume link or data URI",
+          "maxLength": 5000
+        },
+        "cvFileName": {
+          "type": "string",
+          "description": "Original file name of CV",
+          "maxLength": 150
+        },
+        "skills": {
+          "type": "array",
+          "description": "List of student capabilities and technical competencies"
+        },
+        "bio": {
+          "type": "string",
+          "description": "Brief personal summary or objective",
+          "maxLength": 2000
+        },
+        "linkedinUrl": {
+          "type": "string",
+          "description": "LinkedIn profile URL",
+          "maxLength": 300
+        },
+        "portfolioUrl": {
+          "type": "string",
+          "description": "Portfolio or personal website URL",
+          "maxLength": 300
+        },
+        "completedInternships": {
+          "type": "array",
+          "description": "List of previous verified internship experiences"
+        }
+      },
+      "required": ["userId", "nama", "universitas", "jurusan", "semester", "skills"]
+    },
+    "CompanyProfile": {
+      "title": "CompanyProfile",
+      "description": "Company/Partner organization profile and administrative verification status",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "User ID of the company HR / representative"
+        },
+        "namaPerusahaan": {
+          "type": "string",
+          "description": "Official company name",
+          "maxLength": 150
+        },
+        "logoUrl": {
+          "type": "string",
+          "description": "Company logo image URL",
+          "maxLength": 1000
+        },
+        "deskripsi": {
+          "type": "string",
+          "description": "Company overview and history",
+          "maxLength": 3000
+        },
+        "industri": {
+          "type": "string",
+          "description": "Business sector or industry category",
+          "maxLength": 100
+        },
+        "alamat": {
+          "type": "string",
+          "description": "Office street address",
+          "maxLength": 300
+        },
+        "kota": {
+          "type": "string",
+          "description": "Operational city or province",
+          "maxLength": 100
+        },
+        "website": {
+          "type": "string",
+          "description": "Company corporate website URL",
+          "maxLength": 250
+        },
+        "emailKontak": {
+          "type": "string",
+          "description": "Official contact email for recruitment",
+          "maxLength": 150
+        },
+        "noTelepon": {
+          "type": "string",
+          "description": "Company telephone or HR hotline",
+          "maxLength": 30
+        },
+        "statusVerifikasi": {
+          "type": "string",
+          "description": "Verification status evaluated by admin",
+          "enum": ["menunggu", "terverifikasi", "ditolak"]
+        },
+        "alasanPenolakan": {
+          "type": "string",
+          "description": "Feedback or rejection reason provided by admin",
+          "maxLength": 500
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Creation timestamp in ISO format"
+        }
+      },
+      "required": ["userId", "namaPerusahaan", "industri", "statusVerifikasi"]
+    },
+    "JobListing": {
+      "title": "JobListing",
+      "description": "Internship opportunity published by partner company",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique listing identifier"
+        },
+        "companyId": {
+          "type": "string",
+          "description": "Company user ID that owns the job"
+        },
+        "companyName": {
+          "type": "string",
+          "description": "Display name of the hiring company",
+          "maxLength": 150
+        },
+        "companyLogo": {
+          "type": "string",
+          "description": "Company logo URL",
+          "maxLength": 1000
+        },
+        "companyCity": {
+          "type": "string",
+          "description": "Primary city for the job location",
+          "maxLength": 100
+        },
+        "judul": {
+          "type": "string",
+          "description": "Position title for the internship",
+          "maxLength": 150
+        },
+        "deskripsi": {
+          "type": "string",
+          "description": "Role overview and expectations",
+          "maxLength": 4000
+        },
+        "tanggungJawab": {
+          "type": "array",
+          "description": "List of daily tasks and responsibilities"
+        },
+        "kualifikasi": {
+          "type": "array",
+          "description": "List of criteria and requirements"
+        },
+        "benefit": {
+          "type": "array",
+          "description": "Perks and benefits provided"
+        },
+        "kategori": {
+          "type": "string",
+          "description": "Industry category or functional department",
+          "maxLength": 100
+        },
+        "lokasi": {
+          "type": "string",
+          "description": "Workplace location description",
+          "maxLength": 150
+        },
+        "tipe": {
+          "type": "string",
+          "description": "Work arrangement type",
+          "enum": ["remote", "onsite", "hybrid"]
+        },
+        "durasi": {
+          "type": "string",
+          "description": "Internship duration (e.g. 3 Bulan)",
+          "maxLength": 50
+        },
+        "kuota": {
+          "type": "number",
+          "description": "Number of available open seats"
+        },
+        "deadline": {
+          "type": "string",
+          "description": "Application deadline in ISO date format"
+        },
+        "kompensasi": {
+          "type": "string",
+          "description": "Allowance, stipend, or compensation details",
+          "maxLength": 100
+        },
+        "status": {
+          "type": "string",
+          "description": "Current status of the job posting",
+          "enum": ["aktif", "nonaktif", "menunggu_moderasi", "ditolak"]
+        },
+        "alasanModerasi": {
+          "type": "string",
+          "description": "Admin moderation review note",
+          "maxLength": 500
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Listing creation date"
+        }
+      },
+      "required": ["id", "companyId", "judul", "deskripsi", "kategori", "tipe", "status", "deadline"]
+    },
+    "Application": {
+      "title": "Application",
+      "description": "Student internship submission for a specific job listing",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique application ID"
+        },
+        "lowonganId": {
+          "type": "string",
+          "description": "ID of the applied job listing"
+        },
+        "studentId": {
+          "type": "string",
+          "description": "User ID of the applicant student"
+        },
+        "studentName": {
+          "type": "string",
+          "description": "Name of the student at submission",
+          "maxLength": 100
+        },
+        "studentEmail": {
+          "type": "string",
+          "description": "Contact email of the student",
+          "maxLength": 150
+        },
+        "studentPhone": {
+          "type": "string",
+          "description": "Phone number of student",
+          "maxLength": 30
+        },
+        "studentUniversity": {
+          "type": "string",
+          "description": "University attended by student",
+          "maxLength": 150
+        },
+        "studentMajor": {
+          "type": "string",
+          "description": "Department / Major of student",
+          "maxLength": 100
+        },
+        "studentSkills": {
+          "type": "array",
+          "description": "Snapshot of student skills"
+        },
+        "studentAvatar": {
+          "type": "string",
+          "description": "Profile picture of applicant",
+          "maxLength": 1000
+        },
+        "cvUrl": {
+          "type": "string",
+          "description": "Link or data of submitted CV",
+          "maxLength": 5000
+        },
+        "cvFileName": {
+          "type": "string",
+          "description": "File name of submitted CV",
+          "maxLength": 150
+        },
+        "motivationLetter": {
+          "type": "string",
+          "description": "Cover letter / motivation statement",
+          "maxLength": 3000
+        },
+        "portfolioLink": {
+          "type": "string",
+          "description": "External project portfolio URL",
+          "maxLength": 300
+        },
+        "status": {
+          "type": "string",
+          "description": "Selection stage",
+          "enum": ["menunggu", "direview", "interview", "diterima", "ditolak"]
+        },
+        "catatanInternal": {
+          "type": "string",
+          "description": "Private HR note or interview feedback",
+          "maxLength": 2000
+        },
+        "jadwalInterview": {
+          "type": "string",
+          "description": "Interview schedule details or time",
+          "maxLength": 200
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Submission date in ISO format"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Last update timestamp"
+        }
+      },
+      "required": ["id", "lowonganId", "studentId", "cvUrl", "motivationLetter", "status", "createdAt"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "In-app system and workflow notification for a specific user",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Notification ID"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Target recipient user ID"
+        },
+        "judul": {
+          "type": "string",
+          "description": "Notification title or headline",
+          "maxLength": 150
+        },
+        "pesan": {
+          "type": "string",
+          "description": "Body content of the notification",
+          "maxLength": 1000
+        },
+        "isRead": {
+          "type": "boolean",
+          "description": "Whether the user has viewed this notification"
+        },
+        "type": {
+          "type": "string",
+          "description": "Notification classification",
+          "enum": ["status_update", "verification", "job_alert", "system"]
+        },
+        "linkTarget": {
+          "type": "string",
+          "description": "Internal navigation route target",
+          "maxLength": 200
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Creation timestamp in ISO format"
+        }
+      },
+      "required": ["id", "userId", "judul", "pesan", "isRead", "type", "createdAt"]
+    },
+    "ActivityLog": {
+      "title": "ActivityLog",
+      "description": "System-wide activity record for administrative auditing",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Log record ID"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Actor user ID"
+        },
+        "userName": {
+          "type": "string",
+          "description": "Actor display name",
+          "maxLength": 100
+        },
+        "userRole": {
+          "type": "string",
+          "description": "Actor system role",
+          "enum": ["mahasiswa", "perusahaan", "admin"]
+        },
+        "action": {
+          "type": "string",
+          "description": "Action performed",
+          "maxLength": 150
+        },
+        "details": {
+          "type": "string",
+          "description": "Action details or context",
+          "maxLength": 2000
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Log timestamp in ISO format"
+        }
+      },
+      "required": ["id", "userId", "userName", "userRole", "action", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile and system authorization role"
+    },
+    "/studentProfiles/{userId}": {
+      "schema": "StudentProfile",
+      "description": "Detailed academic records and resume for students"
+    },
+    "/companyProfiles/{userId}": {
+      "schema": "CompanyProfile",
+      "description": "Company registration, verification status, and organization info"
+    },
+    "/jobs/{jobId}": {
+      "schema": "JobListing",
+      "description": "Internship listings posted by companies"
+    },
+    "/applications/{applicationId}": {
+      "schema": "Application",
+      "description": "Student applications submitted to internship vacancies"
+    },
+    "/notifications/{notificationId}": {
+      "schema": "Notification",
+      "description": "Targeted notifications for students and companies"
+    },
+    "/activityLogs/{logId}": {
+      "schema": "ActivityLog",
+      "description": "Audit trail of actions across the platform"
+    }
+  }
+}

@@ -1,0 +1,135 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Global Deny All
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'adamvkedua2@gmail.com' ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
+      );
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Users Collection
+    match /users/{userId} {
+      allow get: if isSignedIn() && (isOwner(userId) || isAdmin() || true);
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && (isOwner(userId) || isAdmin()) &&
+        incoming().nama is string && incoming().nama.size() <= 100 &&
+        incoming().email is string && incoming().email.size() <= 150;
+      allow update: if isSignedIn() && (
+        isAdmin() ||
+        (isOwner(userId) && !incoming().diff(existing()).affectedKeys().hasAny(['role', 'isBlocked', 'statusAktif']))
+      );
+      allow delete: if isAdmin();
+    }
+
+    // Student Profiles
+    match /studentProfiles/{userId} {
+      allow get, list: if isSignedIn();
+      allow create, update: if isSignedIn() && (isOwner(userId) || isAdmin()) &&
+        incoming().nama is string && incoming().nama.size() <= 100 &&
+        incoming().universitas is string && incoming().universitas.size() <= 150;
+      allow delete: if isAdmin() || isOwner(userId);
+    }
+
+    // Company Profiles
+    match /companyProfiles/{userId} {
+      allow get, list: if true;
+      allow create: if isSignedIn() && (isOwner(userId) || isAdmin()) &&
+        incoming().namaPerusahaan is string && incoming().namaPerusahaan.size() <= 150;
+      allow update: if isSignedIn() && (
+        isAdmin() ||
+        (isOwner(userId) && !incoming().diff(existing()).affectedKeys().hasAny(['statusVerifikasi', 'alasanPenolakan']))
+      );
+      allow delete: if isAdmin();
+    }
+
+    // Jobs
+    match /jobs/{jobId} {
+      allow get, list: if true;
+      allow create: if isSignedIn() && (
+        isAdmin() ||
+        (incoming().companyId == request.auth.uid && incoming().judul is string && incoming().judul.size() <= 150)
+      );
+      allow update: if isSignedIn() && (
+        isAdmin() ||
+        (existing().companyId == request.auth.uid && incoming().companyId == existing().companyId)
+      );
+      allow delete: if isSignedIn() && (
+        isAdmin() ||
+        (existing().companyId == request.auth.uid)
+      );
+    }
+
+    // Applications
+    match /applications/{applicationId} {
+      allow get: if isSignedIn() && (
+        isAdmin() ||
+        resource.data.studentId == request.auth.uid ||
+        (exists(/databases/$(database)/documents/jobs/$(resource.data.lowonganId)) &&
+         get(/databases/$(database)/documents/jobs/$(resource.data.lowonganId)).data.companyId == request.auth.uid)
+      );
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && (
+        isAdmin() ||
+        (incoming().studentId == request.auth.uid && incoming().motivationLetter is string)
+      );
+      allow update: if isSignedIn() && (
+        isAdmin() ||
+        (resource.data.studentId == request.auth.uid && incoming().studentId == resource.data.studentId) ||
+        (exists(/databases/$(database)/documents/jobs/$(resource.data.lowonganId)) &&
+         get(/databases/$(database)/documents/jobs/$(resource.data.lowonganId)).data.companyId == request.auth.uid)
+      );
+      allow delete: if isAdmin() || (isSignedIn() && resource.data.studentId == request.auth.uid);
+    }
+
+    // Notifications
+    match /notifications/{notificationId} {
+      allow get, list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (
+        resource.data.userId == request.auth.uid || isAdmin()
+      );
+      allow delete: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    // Activity Logs
+    match /activityLogs/{logId} {
+      allow get, list: if isSignedIn() && (isAdmin() || true);
+      allow create: if isSignedIn();
+      allow update, delete: if isAdmin();
+    }
+
+    // Test connection doc
+    match /test/{docId} {
+      allow read, write: if true;
+    }
+  }
+}
