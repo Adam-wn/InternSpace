@@ -47,6 +47,8 @@ const STORAGE_KEYS = {
   DARK_MODE: 'internspace_dark_mode_v1',
 };
 
+export const SYSTEM_ADMIN_EMAIL = 'adamvkedua2@gmail.com';
+
 // Helper for localStorage
 function getItem<T>(key: string, fallback: T): T {
   try {
@@ -69,9 +71,31 @@ function setItem<T>(key: string, value: T): void {
 
 // Initialize seed data if not present
 export function initializeStorage(): void {
-  if (!localStorage.getItem(STORAGE_KEYS.USERS)) {
+  const existingUsers = getItem<User[]>(STORAGE_KEYS.USERS, []);
+  if (!existingUsers.length) {
     setItem(STORAGE_KEYS.USERS, INITIAL_USERS);
+  } else {
+    // Ensure adamvkedua2@gmail.com is configured as the unique admin
+    const adminIdx = existingUsers.findIndex((u) => u.email.toLowerCase() === SYSTEM_ADMIN_EMAIL.toLowerCase());
+    if (adminIdx === -1) {
+      existingUsers.unshift({
+        id: 'user-admin-1',
+        nama: 'Adam (Admin Utama)',
+        email: SYSTEM_ADMIN_EMAIL,
+        password: 'password123',
+        role: 'admin',
+        avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+        createdAt: '2025-01-01T08:00:00.000Z',
+        isBlocked: false,
+      });
+      setItem(STORAGE_KEYS.USERS, existingUsers);
+    } else {
+      existingUsers[adminIdx].role = 'admin';
+      existingUsers[adminIdx].nama = 'Adam (Admin Utama)';
+      setItem(STORAGE_KEYS.USERS, existingUsers);
+    }
   }
+
   if (!localStorage.getItem(STORAGE_KEYS.STUDENT_PROFILES)) {
     setItem(STORAGE_KEYS.STUDENT_PROFILES, INITIAL_STUDENT_PROFILES);
   }
@@ -100,11 +124,7 @@ export function initializeStorage(): void {
     });
   }
 
-  // Default login: default to Siswa SMA (Anisa Rahmawati) to showcase the newly requested POV
-  if (!localStorage.getItem(STORAGE_KEYS.CURRENT_USER)) {
-    const defaultSiswa = INITIAL_USERS.find((u) => u.id === 'user-siswa-1') || INITIAL_USERS[0];
-    setItem(STORAGE_KEYS.CURRENT_USER, defaultSiswa);
-  }
+  // NOTE: User must log in first ("user harus login dulu"). We do NOT set default login.
 
   // Seed Firestore in background if newly connected
   seedFirestoreIfEmpty().catch((err) => {
@@ -188,6 +208,12 @@ export function registerUser(params: {
   kontakGuru?: string;
 }): { success: boolean; user?: User; error?: string } {
   const users = getUsers();
+  if (params.role === 'admin') {
+    return {
+      success: false,
+      error: `Pendaftaran akun Admin tidak diizinkan. Hak akses Admin hanya untuk pemilik sistem (${SYSTEM_ADMIN_EMAIL}).`,
+    };
+  }
   const emailExists = users.some((u) => u.email.toLowerCase() === params.email.toLowerCase());
   if (emailExists) {
     return { success: false, error: 'Email sudah terdaftar. Silakan gunakan email lain atau login.' };
@@ -292,15 +318,42 @@ export function registerUser(params: {
   return { success: true, user: newUser };
 }
 
-export function loginUser(email: string): { success: boolean; user?: User; error?: string } {
+export function loginUser(email: string, expectedRole?: UserRole): { success: boolean; user?: User; error?: string } {
   const users = getUsers();
-  const user = users.find((u) => u.email.toLowerCase() === email.toLowerCase());
+  const user = users.find((u) => u.email.toLowerCase() === email.trim().toLowerCase());
   if (!user) {
     return { success: false, error: 'Email tidak ditemukan dalam sistem.' };
   }
   if (user.isBlocked) {
     return { success: false, error: 'Akun Anda telah dinonaktifkan oleh Admin. Hubungi tim support.' };
   }
+
+  // Khusus Admin: hanya boleh untuk adamvkedua2@gmail.com
+  if (expectedRole === 'admin' || user.role === 'admin') {
+    if (user.email.toLowerCase() !== SYSTEM_ADMIN_EMAIL.toLowerCase()) {
+      return {
+        success: false,
+        error: `Akses Ditolak: Hak akses Admin hanya diberikan khusus untuk ${SYSTEM_ADMIN_EMAIL}.`,
+      };
+    }
+  }
+
+  // Jika pengguna memilih peran tertentu di menu login, pastikan sesuai
+  if (expectedRole && expectedRole !== user.role) {
+    const roleLabel =
+      user.role === 'siswa_sma'
+        ? 'Siswa SMA/SMK'
+        : user.role === 'mahasiswa'
+        ? 'Mahasiswa'
+        : user.role === 'perusahaan'
+        ? 'Perusahaan Mitra'
+        : 'Admin';
+    return {
+      success: false,
+      error: `Akun ini terdaftar sebagai "${roleLabel}". Silakan pilih opsi "${roleLabel}" untuk masuk.`,
+    };
+  }
+
   setCurrentUser(user);
   return { success: true, user };
 }

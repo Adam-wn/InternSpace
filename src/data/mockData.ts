@@ -12,11 +12,11 @@ import {
 export const INITIAL_USERS: User[] = [
   {
     id: 'user-admin-1',
-    nama: 'Budi Santoso',
-    email: 'admin@internspace.id',
+    nama: 'Adam (Admin Utama)',
+    email: 'adamvkedua2@gmail.com',
     password: 'password123',
     role: 'admin',
-    avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80',
+    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
     createdAt: '2025-01-01T08:00:00.000Z',
     isBlocked: false,
   },

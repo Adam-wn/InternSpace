@@ -3,7 +3,6 @@ import { User, UserRole } from './types';
 import {
   getCurrentUser,
   setCurrentUser,
-  getUsers,
   getNotifications,
   markAllNotificationsAsRead,
   initializeStorage,
@@ -45,9 +44,10 @@ import {
   X,
   ShieldCheck,
   Building2,
-  User as UserIcon,
+  GraduationCap,
   School,
   Sparkles,
+  ArrowRight,
 } from 'lucide-react';
 
 export default function App() {
@@ -64,6 +64,7 @@ export default function App() {
   // Modals & UI States
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authInitialMode, setAuthInitialMode] = useState<'login' | 'register'>('login');
+  const [authInitialRole, setAuthInitialRole] = useState<UserRole>('siswa_sma');
   const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
@@ -82,6 +83,7 @@ export default function App() {
     }
 
     const handleDataChange = () => {
+      setUser(getCurrentUser());
       refreshNotificationCount();
     };
 
@@ -116,11 +118,12 @@ export default function App() {
 
   // Sync unread notification count
   const refreshNotificationCount = () => {
-    if (!currentUser) {
+    const current = getCurrentUser();
+    if (!current) {
       setUnreadNotificationCount(0);
       return;
     }
-    const notifs = getNotifications(currentUser.id) || [];
+    const notifs = getNotifications(current.id) || [];
     const unread = notifs.filter((n) => !n.isRead).length;
     setUnreadNotificationCount(unread);
   };
@@ -146,32 +149,17 @@ export default function App() {
     refreshNotificationCount();
   };
 
-  const handleRoleSwitch = (role: UserRole) => {
-    const allUsers = getUsers();
-    const target = allUsers.find((u) => u.role === role);
-    if (target) {
-      setCurrentUser(target);
-      handleUserChange(target);
-      const roleLabel =
-        role === 'siswa_sma'
-          ? 'SISWA SMA/SMK (PKL)'
-          : role === 'mahasiswa'
-          ? 'MAHASISWA'
-          : role === 'perusahaan'
-          ? 'MITRA PERUSAHAAN'
-          : 'ADMIN';
-      addToast(`Beralih peran ke: ${roleLabel} (${target.nama})`, 'info');
-    }
-  };
-
   const handleLogout = () => {
     setCurrentUser(null);
     handleUserChange(null);
     addToast('Anda telah berhasil keluar (logout).', 'info');
   };
 
-  const handleOpenAuth = (mode: 'login' | 'register') => {
+  const handleOpenAuth = (mode: 'login' | 'register', role?: UserRole) => {
     setAuthInitialMode(mode);
+    if (role) {
+      setAuthInitialRole(role);
+    }
     setIsAuthModalOpen(true);
   };
 
@@ -192,87 +180,15 @@ export default function App() {
         notifications={currentUser ? getNotifications(currentUser.id) : []}
         darkMode={darkMode}
         onToggleDarkMode={handleToggleDarkMode}
-        onOpenAuth={handleOpenAuth}
+        onOpenAuth={(mode) => handleOpenAuth(mode)}
         onOpenNotifications={() => setIsNotificationModalOpen(true)}
         onLogout={handleLogout}
-        onRoleSwitch={handleRoleSwitch}
         onToggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         isMobileMenuOpen={isMobileMenuOpen}
         onNavigate={(view) => setCurrentView(view)}
         currentView={currentView}
         onNotify={(msg) => addToast(msg, 'info')}
       />
-
-      {/* Quick Role Switch Bar for Easy Testing across all 4 Roles */}
-      <div className="bg-slate-900 text-white px-4 py-2 text-xs border-b border-slate-800 flex flex-wrap items-center justify-between gap-2 z-20 shadow-xs">
-        <div className="flex items-center gap-2">
-          <span className="font-extrabold uppercase tracking-wider text-[10px] bg-indigo-500/30 text-indigo-300 px-2.5 py-0.5 rounded-full border border-indigo-500/30 flex items-center gap-1">
-            <Sparkles className="w-3 h-3 text-amber-400" />
-            Uji POV Peran Cepat:
-          </span>
-          <span className="text-slate-300 hidden md:inline text-[11px]">
-            Beralih instan antara Siswa SMA/SMK, Mahasiswa, Perusahaan, dan Admin:
-          </span>
-        </div>
-
-        <div className="flex items-center gap-1.5 flex-wrap">
-          {/* 1. Siswa SMA / SMK */}
-          <button
-            onClick={() => handleRoleSwitch('siswa_sma')}
-            id="role-switch-siswa"
-            className={`px-3 py-1 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-              currentUser?.role === 'siswa_sma'
-                ? 'bg-amber-400 text-slate-950 shadow-md ring-2 ring-amber-400/40'
-                : 'bg-slate-800 hover:bg-slate-700 text-amber-300'
-            }`}
-          >
-            <School className="w-3.5 h-3.5" />
-            <span>🎒 Siswa SMA / SMK</span>
-          </button>
-
-          {/* 2. Mahasiswa */}
-          <button
-            onClick={() => handleRoleSwitch('mahasiswa')}
-            id="role-switch-mahasiswa"
-            className={`px-3 py-1 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-              currentUser?.role === 'mahasiswa'
-                ? 'bg-emerald-400 text-slate-950 shadow-md ring-2 ring-emerald-400/40'
-                : 'bg-slate-800 hover:bg-slate-700 text-emerald-300'
-            }`}
-          >
-            <UserIcon className="w-3.5 h-3.5" />
-            <span>🎓 Mahasiswa</span>
-          </button>
-
-          {/* 3. Mitra Perusahaan */}
-          <button
-            onClick={() => handleRoleSwitch('perusahaan')}
-            id="role-switch-perusahaan"
-            className={`px-3 py-1 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-              currentUser?.role === 'perusahaan'
-                ? 'bg-sky-400 text-slate-950 shadow-md ring-2 ring-sky-400/40'
-                : 'bg-slate-800 hover:bg-slate-700 text-sky-300'
-            }`}
-          >
-            <Building2 className="w-3.5 h-3.5" />
-            <span>🏢 Mitra Perusahaan</span>
-          </button>
-
-          {/* 4. Admin */}
-          <button
-            onClick={() => handleRoleSwitch('admin')}
-            id="role-switch-admin"
-            className={`px-3 py-1 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-              currentUser?.role === 'admin'
-                ? 'bg-purple-400 text-slate-950 shadow-md ring-2 ring-purple-400/40'
-                : 'bg-slate-800 hover:bg-slate-700 text-purple-300'
-            }`}
-          >
-            <ShieldCheck className="w-3.5 h-3.5" />
-            <span>🛡️ Admin</span>
-          </button>
-        </div>
-      </div>
 
       {/* Main Body Layout with Sidebar + View */}
       <div className="flex-1 flex flex-col md:flex-row max-w-7xl w-full mx-auto">
@@ -324,17 +240,144 @@ export default function App() {
 
         {/* Main Content Area */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8 min-w-0">
-          {/* GUEST (NOT LOGGED IN) */}
+          {/* GUEST (NOT LOGGED IN) — "USER HARUS LOGIN DULU" */}
           {!currentUser && (
-            <>
-              {currentView === 'jobs' && (
+            <div className="space-y-6">
+              {/* HERO GATEWAY WITH 3 ROLE OPTIONS */}
+              <div className="relative overflow-hidden rounded-3xl bg-linear-to-br from-indigo-900 via-slate-900 to-slate-950 p-6 sm:p-10 text-white shadow-xl border border-indigo-800/40">
+                <div className="absolute top-0 right-0 -mt-10 -mr-10 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+                <div className="relative z-10 max-w-2xl">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-xs font-bold border border-indigo-500/30 mb-4">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                    Portal Magang & PKL Terpadu Indonesia
+                  </div>
+                  <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white mb-3">
+                    Selamat Datang di InternSpace
+                  </h1>
+                  <p className="text-slate-300 text-xs sm:text-sm leading-relaxed mb-6">
+                    Silakan masuk terlebih dahulu untuk mengakses portal dan fitur sesuai peran Anda. Pilih peran akun Anda di bawah ini:
+                  </p>
+
+                  {/* 3 ROLE ENTRY CARDS */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+                    {/* Siswa SMA / SMK */}
+                    <button
+                      type="button"
+                      id="guest-role-siswa"
+                      onClick={() => handleOpenAuth('login', 'siswa_sma')}
+                      className="p-4 rounded-2xl bg-slate-800/80 hover:bg-amber-950/40 border border-slate-700 hover:border-amber-500 text-left transition-all group cursor-pointer"
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                        <School className="w-5 h-5" />
+                      </div>
+                      <div className="font-bold text-sm text-white group-hover:text-amber-300 transition-colors">
+                        Siswa SMA / SMK
+                      </div>
+                      <div className="text-[11px] text-slate-400 mt-1 leading-snug">
+                        Masuk untuk mencari tempat PKL, isi jurnal logbook, dan pantau pengesahan.
+                      </div>
+                      <div className="mt-3 text-xs font-bold text-amber-400 flex items-center gap-1">
+                        <span>Masuk Portal Siswa</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </div>
+                    </button>
+
+                    {/* Mahasiswa */}
+                    <button
+                      type="button"
+                      id="guest-role-mahasiswa"
+                      onClick={() => handleOpenAuth('login', 'mahasiswa')}
+                      className="p-4 rounded-2xl bg-slate-800/80 hover:bg-emerald-950/40 border border-slate-700 hover:border-emerald-500 text-left transition-all group cursor-pointer"
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                        <GraduationCap className="w-5 h-5" />
+                      </div>
+                      <div className="font-bold text-sm text-white group-hover:text-emerald-300 transition-colors">
+                        Mahasiswa
+                      </div>
+                      <div className="text-[11px] text-slate-400 mt-1 leading-snug">
+                        Masuk untuk eksplorasi magang bergengsi, upload CV, dan lamar posisi.
+                      </div>
+                      <div className="mt-3 text-xs font-bold text-emerald-400 flex items-center gap-1">
+                        <span>Masuk Portal Mahasiswa</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </div>
+                    </button>
+
+                    {/* Perusahaan Mitra */}
+                    <button
+                      type="button"
+                      id="guest-role-perusahaan"
+                      onClick={() => handleOpenAuth('login', 'perusahaan')}
+                      className="p-4 rounded-2xl bg-slate-800/80 hover:bg-sky-950/40 border border-slate-700 hover:border-sky-500 text-left transition-all group cursor-pointer"
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                        <Building2 className="w-5 h-5" />
+                      </div>
+                      <div className="font-bold text-sm text-white group-hover:text-sky-300 transition-colors">
+                        Perusahaan Mitra
+                      </div>
+                      <div className="text-[11px] text-slate-400 mt-1 leading-snug">
+                        Masuk untuk publikasi lowongan magang & PKL serta kelola seleksi pelamar.
+                      </div>
+                      <div className="mt-3 text-xs font-bold text-sky-400 flex items-center gap-1">
+                        <span>Masuk Portal Perusahaan</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </div>
+                    </button>
+                  </div>
+
+                  {/* Footnote with Admin Portal */}
+                  <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-800 text-xs">
+                    <span className="text-slate-400 text-[11px]">
+                      Belum memiliki akun?{' '}
+                      <button
+                        onClick={() => handleOpenAuth('register')}
+                        className="text-indigo-400 hover:underline font-semibold cursor-pointer"
+                      >
+                        Daftar Akun Baru
+                      </button>
+                    </span>
+
+                    <button
+                      type="button"
+                      id="guest-admin-portal-link"
+                      onClick={() => handleOpenAuth('login', 'admin')}
+                      className="text-[11px] text-purple-400 hover:text-purple-300 flex items-center gap-1 cursor-pointer font-medium"
+                    >
+                      <ShieldCheck className="w-3.5 h-3.5" />
+                      <span>Akses Khusus Pemilik Sistem (Admin)</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* PUBLIC PREVIEW OF JOBS EXPLORER */}
+              <div className="mt-8">
+                <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                      Katalog Lowongan Magang & PKL Terbuka
+                    </h2>
+                    <p className="text-xs text-slate-500">
+                      Pratinjau katalog lowongan. Untuk melamar pekerjaan dan menyimpan ke favorit, silakan masuk ke akun Anda.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handleOpenAuth('login')}
+                    className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-xs transition-colors cursor-pointer self-start sm:self-auto"
+                  >
+                    Masuk untuk Melamar
+                  </button>
+                </div>
+
                 <JobsExplorer
                   currentUser={null}
                   onNotify={addToast}
                   onNavigateToAuth={() => handleOpenAuth('login')}
                 />
-              )}
-            </>
+              </div>
+            </div>
           )}
 
           {/* SISWA SMA / SMK VIEWS (POV BARU!) */}
@@ -415,7 +458,7 @@ export default function App() {
             </>
           )}
 
-          {/* PERUSAHAAN VIEWS */}
+          {/* COMPANY VIEWS */}
           {currentUser && currentUser.role === 'perusahaan' && (
             <>
               {currentView === 'company-dashboard' && (
@@ -428,7 +471,7 @@ export default function App() {
                 <CompanyJobs
                   currentUser={currentUser}
                   onNotify={addToast}
-                  onViewApplicantsForJob={handleViewApplicantsForJob}
+                  onViewApplicants={handleViewApplicantsForJob}
                 />
               )}
               {currentView === 'company-applicants' && (
@@ -453,17 +496,17 @@ export default function App() {
                   onNavigate={(view) => setCurrentView(view)}
                 />
               )}
-              {currentView === 'admin-verify' && (
-                <CompanyVerification currentUser={currentUser} onNotify={addToast} />
+              {currentView === 'verify-companies' && (
+                <CompanyVerification onNotify={addToast} />
               )}
-              {currentView === 'admin-jobs' && (
-                <JobModeration currentUser={currentUser} onNotify={addToast} />
+              {currentView === 'moderate-jobs' && (
+                <JobModeration onNotify={addToast} />
               )}
-              {currentView === 'admin-users' && (
-                <UserManagement currentUser={currentUser} onNotify={addToast} />
+              {currentView === 'user-management' && (
+                <UserManagement onNotify={addToast} />
               )}
-              {currentView === 'admin-logs' && (
-                <ActivityLogs currentUser={currentUser} onNotify={addToast} />
+              {currentView === 'activity-logs' && (
+                <ActivityLogs />
               )}
             </>
           )}
@@ -475,15 +518,12 @@ export default function App() {
         <AuthModal
           isOpen={isAuthModalOpen}
           initialMode={authInitialMode}
+          initialRole={authInitialRole}
           onClose={() => setIsAuthModalOpen(false)}
-          onSuccess={(user) => {
-            const roleLabel =
-              typeof user === 'string'
-                ? user
-                : user?.nama
-                ? `Selamat datang, ${user.nama}!`
-                : 'Berhasil masuk!';
-            addToast(roleLabel, 'success');
+          onSuccess={(message) => {
+            addToast(message, 'success');
+            const user = getCurrentUser();
+            handleUserChange(user);
           }}
           onNotify={addToast}
         />

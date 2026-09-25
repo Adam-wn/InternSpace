@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, InAppNotification, UserRole } from '../types';
+import { User, InAppNotification } from '../types';
 import {
   Briefcase,
   Bell,
@@ -8,16 +8,13 @@ import {
   ChevronDown,
   LogOut,
   User as UserIcon,
-  Sparkles,
   Menu,
   X,
-  GraduationCap,
   Building2,
-  ShieldCheck,
   School,
 } from 'lucide-react';
 import { RoleBadge } from './common/Badge';
-import { setCurrentUser, getUsers, setDarkMode } from '../services/storage';
+import { setCurrentUser } from '../services/storage';
 
 interface NavbarProps {
   currentUser: User | null;
@@ -31,7 +28,6 @@ interface NavbarProps {
   currentView?: string;
   onNotify?: (message: string) => void;
   onLogout?: () => void;
-  onRoleSwitch?: (role: UserRole) => void;
   onToggleMobileMenu?: () => void;
   isMobileMenuOpen?: boolean;
   mobileMenuOpen?: boolean;
@@ -50,13 +46,11 @@ export const Navbar: React.FC<NavbarProps> = ({
   currentView,
   onNotify,
   onLogout,
-  onRoleSwitch,
   onToggleMobileMenu,
   isMobileMenuOpen,
   mobileMenuOpen,
   setMobileMenuOpen,
 }) => {
-  const [showRoleSwitcher, setShowRoleSwitcher] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   const isMenuOpen = mobileMenuOpen ?? isMobileMenuOpen ?? false;
@@ -66,26 +60,6 @@ export const Navbar: React.FC<NavbarProps> = ({
     unreadNotificationCount !== undefined
       ? unreadNotificationCount
       : (notifications ? notifications.filter((n) => !n.isRead).length : 0);
-
-  const handleSwitchUser = (userId: string) => {
-    const allUsers = getUsers();
-    const target = allUsers.find((u) => u.id === userId);
-    if (target) {
-      setCurrentUser(target);
-      setShowRoleSwitcher(false);
-      if (onRoleSwitch) {
-        onRoleSwitch(target.role);
-      }
-      onNotify?.(`Beralih akun ke: ${target.nama} (${target.role.toUpperCase()})`);
-      // Default views per role
-      if (onNavigate) {
-        if (target.role === 'siswa_sma') onNavigate('siswa-dashboard');
-        else if (target.role === 'mahasiswa') onNavigate('jobs');
-        else if (target.role === 'perusahaan') onNavigate('company-dashboard');
-        else if (target.role === 'admin') onNavigate('admin-dashboard');
-      }
-    }
-  };
 
   const handleLogoutAction = () => {
     if (onLogout) {
@@ -98,13 +72,13 @@ export const Navbar: React.FC<NavbarProps> = ({
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        {/* Left: Brand & Mobile Menu Toggle */}
+    <header className="sticky top-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 transition-colors">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+        {/* Left: Mobile Menu Toggle & Brand Logo */}
         <div className="flex items-center gap-3">
           <button
             onClick={toggleMobile}
-            className="md:hidden p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+            className="md:hidden p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
             aria-label="Toggle Menu"
           >
             {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -143,91 +117,11 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
         </div>
 
-        {/* Center: Active Role Badge / Switcher */}
+        {/* Center: Active Role Badge (Display only, no arbitrary switching without login) */}
         {currentUser && (
-          <div className="hidden md:flex items-center relative">
-            <button
-              onClick={() => setShowRoleSwitcher(!showRoleSwitcher)}
-              id="role-switcher-button"
-              className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 transition-colors border border-slate-200/80 dark:border-slate-700"
-            >
-              <span className="text-slate-500">Peran Aktif:</span>
-              <RoleBadge role={currentUser.role} />
-              <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-            </button>
-
-            {/* Quick Switch Dropdown */}
-            {showRoleSwitcher && (
-              <div
-                className="absolute top-10 left-1/2 -translate-x-1/2 w-64 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 p-2 z-50 animate-in fade-in zoom-in-95 duration-100"
-                onClick={() => setShowRoleSwitcher(false)}
-              >
-                <div className="px-2 py-1.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                  Ganti Akun & Peran Cepat:
-                </div>
-                <div className="space-y-1">
-                  <button
-                    onClick={() => handleSwitchUser('user-siswa-1')}
-                    className={`w-full flex items-center gap-2.5 p-2 rounded-lg text-left text-xs transition-colors ${
-                      currentUser.id === 'user-siswa-1'
-                        ? 'bg-amber-50 text-amber-900 dark:bg-amber-950/50 dark:text-amber-200 font-bold'
-                        : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
-                    }`}
-                  >
-                    <School className="w-4 h-4 text-amber-600 shrink-0" />
-                    <div>
-                      <div>Anisa Rahmawati</div>
-                      <div className="text-[10px] text-slate-500">🎒 Siswa SMA / SMK (PKL)</div>
-                    </div>
-                  </button>
-
-                  <button
-                    onClick={() => handleSwitchUser('user-stud-1')}
-                    className={`w-full flex items-center gap-2.5 p-2 rounded-lg text-left text-xs transition-colors ${
-                      currentUser.id === 'user-stud-1'
-                        ? 'bg-emerald-50 text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200 font-bold'
-                        : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
-                    }`}
-                  >
-                    <GraduationCap className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <div>
-                      <div>Dimas Pratama</div>
-                      <div className="text-[10px] text-slate-500">🎓 Mahasiswa (UI)</div>
-                    </div>
-                  </button>
-
-                  <button
-                    onClick={() => handleSwitchUser('user-comp-1')}
-                    className={`w-full flex items-center gap-2.5 p-2 rounded-lg text-left text-xs transition-colors ${
-                      currentUser.id === 'user-comp-1'
-                        ? 'bg-sky-50 text-sky-900 dark:bg-sky-950/50 dark:text-sky-200 font-bold'
-                        : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
-                    }`}
-                  >
-                    <Building2 className="w-4 h-4 text-sky-600 shrink-0" />
-                    <div>
-                      <div>PT Teknologi Nusantara</div>
-                      <div className="text-[10px] text-slate-500">Perusahaan Mitra</div>
-                    </div>
-                  </button>
-
-                  <button
-                    onClick={() => handleSwitchUser('user-admin-1')}
-                    className={`w-full flex items-center gap-2.5 p-2 rounded-lg text-left text-xs transition-colors ${
-                      currentUser.id === 'user-admin-1'
-                        ? 'bg-purple-50 text-purple-900 dark:bg-purple-950/50 dark:text-purple-200 font-bold'
-                        : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
-                    }`}
-                  >
-                    <ShieldCheck className="w-4 h-4 text-purple-600 shrink-0" />
-                    <div>
-                      <div>Budi Santoso</div>
-                      <div className="text-[10px] text-slate-500">Admin Utama</div>
-                    </div>
-                  </button>
-                </div>
-              </div>
-            )}
+          <div className="hidden md:flex items-center gap-2 bg-slate-100/80 dark:bg-slate-800/80 px-3 py-1 rounded-full border border-slate-200/80 dark:border-slate-700">
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Peran Aktif:</span>
+            <RoleBadge role={currentUser.role} />
           </div>
         )}
 
@@ -238,7 +132,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             onClick={onToggleDarkMode}
             id="dark-mode-toggle"
             title={darkMode ? 'Beralih ke Terang' : 'Beralih ke Gelap'}
-            className="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             aria-label="Toggle Mode"
           >
             {darkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-600" />}
@@ -249,7 +143,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               onClick={onOpenNotifications}
               id="notifications-bell-button"
-              className="relative p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="relative p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               aria-label="Notifikasi"
             >
               <Bell className="w-4 h-4" />
@@ -267,7 +161,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 onClick={() => setShowProfileMenu(!showProfileMenu)}
                 id="user-profile-menu-button"
-                className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               >
                 <img
                   src={
@@ -289,20 +183,33 @@ export const Navbar: React.FC<NavbarProps> = ({
               {/* Profile Menu Dropdown */}
               {showProfileMenu && (
                 <div
-                  className="absolute right-0 top-12 w-52 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100"
+                  className="absolute right-0 top-12 w-56 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100"
                   onClick={() => setShowProfileMenu(false)}
                 >
                   <div className="px-3 py-2 border-b border-slate-100 dark:border-slate-800 mb-1">
                     <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{currentUser.nama}</p>
                     <p className="text-[11px] text-slate-500 truncate">{currentUser.email}</p>
+                    <div className="mt-1">
+                      <RoleBadge role={currentUser.role} />
+                    </div>
                   </div>
+
+                  {currentUser.role === 'siswa_sma' && (
+                    <button
+                      onClick={() => onNavigate?.('profile')}
+                      className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                    >
+                      <School className="w-4 h-4 text-amber-500" />
+                      Profil Siswa & Berkas PKL
+                    </button>
+                  )}
 
                   {currentUser.role === 'mahasiswa' && (
                     <button
                       onClick={() => onNavigate?.('profile')}
-                      className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                      className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                     >
-                      <UserIcon className="w-4 h-4 text-slate-400" />
+                      <UserIcon className="w-4 h-4 text-emerald-500" />
                       Profil Saya & CV
                     </button>
                   )}
@@ -310,9 +217,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                   {currentUser.role === 'perusahaan' && (
                     <button
                       onClick={() => onNavigate?.('company-profile')}
-                      className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                      className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                     >
-                      <Building2 className="w-4 h-4 text-slate-400" />
+                      <Building2 className="w-4 h-4 text-sky-500" />
                       Profil Perusahaan
                     </button>
                   )}
@@ -320,7 +227,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <button
                     onClick={handleLogoutAction}
                     id="logout-button"
-                    className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors font-medium mt-1"
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors font-medium mt-1 cursor-pointer"
                   >
                     <LogOut className="w-4 h-4 text-rose-500" />
                     Keluar (Logout)
@@ -333,14 +240,14 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 onClick={() => onOpenAuth('login')}
                 id="login-nav-button"
-                className="px-3.5 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:text-indigo-600 transition-colors"
+                className="px-3.5 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:text-indigo-600 transition-colors cursor-pointer"
               >
                 Masuk
               </button>
               <button
                 onClick={() => onOpenAuth('register')}
                 id="register-nav-button"
-                className="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-xs transition-colors"
+                className="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
               >
                 Daftar
               </button>
