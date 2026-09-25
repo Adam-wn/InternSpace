@@ -808,8 +808,10 @@ export function setDarkMode(value: boolean): void {
   setItem(STORAGE_KEYS.DARK_MODE, value);
   if (value) {
     document.documentElement.classList.add('dark');
+    document.body.classList.add('dark');
   } else {
     document.documentElement.classList.remove('dark');
+    document.body.classList.remove('dark');
   }
 }
 

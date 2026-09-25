@@ -16,6 +16,8 @@ import {
   Clock,
   School,
   BookOpen,
+  Sun,
+  Moon,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -24,6 +26,8 @@ interface SidebarProps {
   onNavigate: (view: string) => void;
   isMobileDrawer?: boolean;
   onCloseMobileDrawer?: () => void;
+  darkMode?: boolean;
+  onToggleDarkMode?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -32,6 +36,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onNavigate,
   isMobileDrawer = false,
   onCloseMobileDrawer,
+  darkMode = false,
+  onToggleDarkMode,
 }) => {
   if (!currentUser) return null;
 
@@ -288,6 +294,28 @@ export const Sidebar: React.FC<SidebarProps> = ({
             Data tersimpan persisten. Anda dapat berpindah peran kapan saja untuk menguji alur lengkap.
           </p>
         </div>
+
+        {/* Theme Switcher Toggle in Sidebar */}
+        {onToggleDarkMode && (
+          <button
+            type="button"
+            onClick={onToggleDarkMode}
+            id="sidebar-theme-toggle"
+            className="w-full flex items-center justify-between p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold transition-all cursor-pointer"
+          >
+            <div className="flex items-center gap-2">
+              {darkMode ? (
+                <Sun className="w-4 h-4 text-amber-400" />
+              ) : (
+                <Moon className="w-4 h-4 text-slate-600 dark:text-slate-300" />
+              )}
+              <span>{darkMode ? 'Mode Gelap Aktif' : 'Mode Terang Aktif'}</span>
+            </div>
+            <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold">
+              Ubah
+            </span>
+          </button>
+        )}
       </div>
     </aside>
   );

@@ -76,10 +76,13 @@ export default function App() {
   useEffect(() => {
     initializeStorage();
     const isDark = getDarkMode();
+    setDarkModeState(isDark);
     if (isDark) {
       document.documentElement.classList.add('dark');
+      document.body.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
+      document.body.classList.remove('dark');
     }
 
     const handleDataChange = () => {
@@ -99,9 +102,12 @@ export default function App() {
     setDarkMode(next);
     if (next) {
       document.documentElement.classList.add('dark');
+      document.body.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
+      document.body.classList.remove('dark');
     }
+    addToast(next ? 'Mode Gelap diaktifkan' : 'Mode Terang diaktifkan', 'info');
   };
 
   // Toast notifications
@@ -169,7 +175,11 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50/70 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans transition-colors duration-200">
+    <div
+      className={`min-h-screen bg-slate-50/70 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans transition-colors duration-200 ${
+        darkMode ? 'dark' : ''
+      }`}
+    >
       {/* Toast notifications container */}
       <ToastContainer toasts={toasts} onClose={removeToast} />
 
@@ -197,6 +207,8 @@ export default function App() {
           <Sidebar
             currentUser={currentUser}
             currentView={currentView}
+            darkMode={darkMode}
+            onToggleDarkMode={handleToggleDarkMode}
             onNavigate={(view) => {
               setCurrentView(view);
               setIsMobileMenuOpen(false);
@@ -221,6 +233,8 @@ export default function App() {
                 <Sidebar
                   currentUser={currentUser}
                   currentView={currentView}
+                  darkMode={darkMode}
+                  onToggleDarkMode={handleToggleDarkMode}
                   onNavigate={(view) => {
                     setCurrentView(view);
                     setIsMobileMenuOpen(false);
