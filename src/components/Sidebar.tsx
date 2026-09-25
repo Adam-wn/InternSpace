@@ -14,6 +14,8 @@ import {
   Activity,
   CheckCircle2,
   Clock,
+  School,
+  BookOpen,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -58,6 +60,70 @@ export const Sidebar: React.FC<SidebarProps> = ({
       }`}
     >
       <div className="space-y-6">
+        {/* Navigation Group for Siswa SMA / SMK */}
+        {role === 'siswa_sma' && (
+          <div>
+            <div className="px-3 text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+              <School className="w-3.5 h-3.5" />
+              <span>Menu Siswa SMA / SMK</span>
+            </div>
+            <nav className="space-y-1">
+              <button
+                onClick={() => handleNav('siswa-dashboard')}
+                id="nav-siswa-dashboard"
+                className={navItemClass('siswa-dashboard')}
+              >
+                <LayoutDashboard className="w-4 h-4 shrink-0" />
+                <span>Dashboard PKL Siswa</span>
+              </button>
+
+              <button
+                onClick={() => handleNav('jobs')}
+                id="nav-siswa-jobs"
+                className={navItemClass('jobs')}
+              >
+                <Compass className="w-4 h-4 shrink-0" />
+                <span>Cari Tempat PKL & Upah</span>
+              </button>
+
+              <button
+                onClick={() => handleNav('siswa-logbook')}
+                id="nav-siswa-logbook"
+                className={navItemClass('siswa-logbook')}
+              >
+                <BookOpen className="w-4 h-4 shrink-0" />
+                <span>Logbook Jurnal PKL</span>
+              </button>
+
+              <button
+                onClick={() => handleNav('applications')}
+                id="nav-siswa-applications"
+                className={navItemClass('applications')}
+              >
+                <FileText className="w-4 h-4 shrink-0" />
+                <span>Lamaran PKL Saya</span>
+              </button>
+
+              <button
+                onClick={() => handleNav('saved-jobs')}
+                id="nav-siswa-saved-jobs"
+                className={navItemClass('saved-jobs')}
+              >
+                <Bookmark className="w-4 h-4 shrink-0" />
+                <span>Wishlist Lowongan</span>
+              </button>
+
+              <button
+                onClick={() => handleNav('profile')}
+                id="nav-siswa-profile"
+                className={navItemClass('profile')}
+              >
+                <UserIcon className="w-4 h-4 shrink-0" />
+                <span>Biodata & Surat PKL</span>
+              </button>
+            </nav>
+          </div>
+        )}
         {/* Navigation Group based on Role */}
         {role === 'mahasiswa' && (
           <div>

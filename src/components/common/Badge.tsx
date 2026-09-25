@@ -179,5 +179,45 @@ export const RoleBadge: React.FC<{ role: UserRole }> = ({ role }) => {
           Mahasiswa Pelamar
         </span>
       );
+    case 'siswa_sma':
+      return (
+        <span className="inline-flex items-center rounded-md bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800">
+          🎒 Siswa SMA / SMK (PKL)
+        </span>
+      );
+    default:
+      return null;
   }
+};
+
+export const TargetJenjangBadge: React.FC<{ target?: 'semua' | 'siswa_sma' | 'mahasiswa' }> = ({ target = 'semua' }) => {
+  if (target === 'siswa_sma') {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-bold text-amber-800 border border-amber-300 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800">
+        🎒 Khusus Siswa SMA / SMK (PKL)
+      </span>
+    );
+  }
+  if (target === 'mahasiswa') {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-bold text-indigo-700 border border-indigo-200 dark:bg-indigo-950/50 dark:text-indigo-300 dark:border-indigo-800">
+        🎓 Mahasiswa (D3 / S1)
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-teal-50 px-2.5 py-0.5 text-xs font-medium text-teal-700 border border-teal-200 dark:bg-teal-950/50 dark:text-teal-300 dark:border-teal-800">
+      ✨ Siswa SMA/SMK & Mahasiswa
+    </span>
+  );
+};
+
+export const KompensasiBadge: React.FC<{ kompensasi?: string; upahNominal?: number }> = ({ kompensasi, upahNominal }) => {
+  const text = kompensasi || (upahNominal ? `Rp ${upahNominal.toLocaleString('id-ID')} / bulan` : 'Uang Saku + Transport');
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-1 text-xs font-bold text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 shadow-2xs">
+      <span className="text-emerald-600 dark:text-emerald-400 font-extrabold text-[13px]">💰</span>
+      <span>{text}</span>
+    </span>
+  );
 };

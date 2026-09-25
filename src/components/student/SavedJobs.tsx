@@ -1,7 +1,7 @@
 import React from 'react';
 import { User, JobListing } from '../../types';
 import { getBookmarks, getJobs, toggleBookmark } from '../../services/storage';
-import { JobTypeBadge } from '../common/Badge';
+import { JobTypeBadge, KompensasiBadge, TargetJenjangBadge } from '../common/Badge';
 import { Bookmark, MapPin, Clock, ArrowRight, Trash2, Briefcase } from 'lucide-react';
 
 interface SavedJobsProps {
@@ -96,6 +96,7 @@ export const SavedJobs: React.FC<SavedJobsProps> = ({ currentUser, onNotify, onN
                 </h3>
 
                 <div className="flex flex-wrap items-center gap-1.5 mb-3">
+                  <TargetJenjangBadge target={job.targetJenjang} />
                   <JobTypeBadge type={job.tipe} />
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
                     <Clock className="w-3 h-3 text-slate-400" />
@@ -109,13 +110,11 @@ export const SavedJobs: React.FC<SavedJobsProps> = ({ currentUser, onNotify, onN
               </div>
 
               <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                  {job.kompensasi || 'Uang Saku'}
-                </span>
+                <KompensasiBadge kompensasi={job.kompensasi} upahNominal={job.upahNominal} />
 
                 <button
                   onClick={onNavigateToJobs}
-                  className="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-xs transition-colors flex items-center gap-1"
+                  className="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-xs transition-colors flex items-center gap-1 cursor-pointer"
                 >
                   <span>Buka & Lamar</span>
                   <ArrowRight className="w-3.5 h-3.5" />

@@ -1,6 +1,6 @@
 {
   "name": "InternSpace",
-  "description": "Platform Manajemen Magang Terpadu untuk Mahasiswa, Perusahaan, dan Admin",
+  "description": "Platform Manajemen Magang & PKL Terpadu untuk Siswa SMA/SMK, Mahasiswa, Mitra Perusahaan, dan Admin",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { User, JobListing, JobStatus } from '../../types';
 import { getJobs, saveJob, deleteJob } from '../../services/storage';
-import { JobStatusBadge, JobTypeBadge } from '../common/Badge';
+import { JobStatusBadge, JobTypeBadge, TargetJenjangBadge, KompensasiBadge } from '../common/Badge';
 import {
   Briefcase,
   Search,
@@ -116,6 +116,8 @@ export const JobModeration: React.FC<JobModerationProps> = ({ currentUser, onNot
                     </h3>
                     <JobStatusBadge status={job.status} />
                     <JobTypeBadge type={job.tipe} />
+                    <TargetJenjangBadge target={job.targetJenjang} />
+                    <KompensasiBadge kompensasi={job.kompensasi} upahNominal={job.upahNominal} />
                   </div>
                   <p className="text-xs text-slate-600 dark:text-slate-400">
                     {job.companyName} • {job.kategori} • Kuota: {job.kuota} orang • Deadline:{' '}

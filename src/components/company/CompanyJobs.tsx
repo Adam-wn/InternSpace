@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, JobListing, JobType, JobStatus } from '../../types';
+import { User, JobListing, JobType, JobStatus, TargetJenjang } from '../../types';
 import {
   getJobsByCompany,
   saveJob,
@@ -7,7 +7,7 @@ import {
   getApplicationsByCompany,
   getCompanyProfile,
 } from '../../services/storage';
-import { JobStatusBadge, JobTypeBadge } from '../common/Badge';
+import { JobStatusBadge, JobTypeBadge, TargetJenjangBadge, KompensasiBadge } from '../common/Badge';
 import { Modal } from '../common/Modal';
 import {
   Plus,
@@ -52,6 +52,7 @@ export const CompanyJobs: React.FC<CompanyJobsProps> = ({
   const [kuota, setKuota] = useState(3);
   const [deadline, setDeadline] = useState('2025-05-30');
   const [kompensasi, setKompensasi] = useState('Rp 3.500.000 / bulan');
+  const [targetJenjang, setTargetJenjang] = useState<TargetJenjang>('semua');
   const [deskripsi, setDeskripsi] = useState('');
 
   // Dynamic list states
@@ -62,7 +63,7 @@ export const CompanyJobs: React.FC<CompanyJobsProps> = ({
   const [newResp, setNewResp] = useState('');
 
   const [qualifications, setQualifications] = useState<string[]>([
-    'Mahasiswa aktif semester 5-8 program studi relevan.',
+    'Mahasiswa aktif semester 5-8 atau Siswa SMK kejuruan relevan.',
     'Menguasai dasar pemrograman dan memiliki kemauan belajar yang kuat.',
   ]);
   const [newQual, setNewQual] = useState('');
@@ -84,15 +85,16 @@ export const CompanyJobs: React.FC<CompanyJobsProps> = ({
     setKuota(2);
     setDeadline('2025-06-30');
     setKompensasi('Rp 3.500.000 / bulan');
+    setTargetJenjang('semua');
     setDeskripsi(
-      'Kami mencari mahasiswa berbakat dan berdedikasi tinggi untuk bergabung dalam program magang intensif di perusahaan kami.'
+      'Kami mencari talenta muda berbakat dan berdedikasi tinggi untuk bergabung dalam program magang intensif di perusahaan kami.'
     );
     setResponsibilities([
       'Melakukan riset dan analisis kebutuhan pengguna.',
       'Membantu penyusunan materi dan implementasi proyek tim.',
     ]);
     setQualifications([
-      'Mahasiswa aktif semester 5 ke atas.',
+      'Terbuka untuk Siswa SMA/SMK atau Mahasiswa aktif.',
       'Memiliki motivasi tinggi dan keterampilan komunikasi yang baik.',
     ]);
     setBenefits(['Uang saku bulanan', 'Sertifikat magang', 'Fleksibilitas kerja']);
@@ -109,6 +111,7 @@ export const CompanyJobs: React.FC<CompanyJobsProps> = ({
     setKuota(job.kuota);
     setDeadline(job.deadline);
     setKompensasi(job.kompensasi || '');
+    setTargetJenjang(job.targetJenjang || 'semua');
     setDeskripsi(job.deskripsi);
     setResponsibilities([...job.tanggungJawab]);
     setQualifications([...job.kualifikasi]);

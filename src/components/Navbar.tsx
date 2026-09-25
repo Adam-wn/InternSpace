@@ -8,16 +8,16 @@ import {
   ChevronDown,
   LogOut,
   User as UserIcon,
-  RotateCcw,
   Sparkles,
   Menu,
   X,
   GraduationCap,
   Building2,
   ShieldCheck,
+  School,
 } from 'lucide-react';
 import { RoleBadge } from './common/Badge';
-import { setCurrentUser, resetToDemoData, getUsers, setDarkMode } from '../services/storage';
+import { setCurrentUser, getUsers, setDarkMode } from '../services/storage';
 
 interface NavbarProps {
   currentUser: User | null;
@@ -36,7 +36,6 @@ interface NavbarProps {
   isMobileMenuOpen?: boolean;
   mobileMenuOpen?: boolean;
   setMobileMenuOpen?: (open: boolean) => void;
-  onResetDemo?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -56,7 +55,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   isMobileMenuOpen,
   mobileMenuOpen,
   setMobileMenuOpen,
-  onResetDemo,
 }) => {
   const [showRoleSwitcher, setShowRoleSwitcher] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -81,21 +79,10 @@ export const Navbar: React.FC<NavbarProps> = ({
       onNotify?.(`Beralih akun ke: ${target.nama} (${target.role.toUpperCase()})`);
       // Default views per role
       if (onNavigate) {
-        if (target.role === 'mahasiswa') onNavigate('jobs');
+        if (target.role === 'siswa_sma') onNavigate('siswa-dashboard');
+        else if (target.role === 'mahasiswa') onNavigate('jobs');
         else if (target.role === 'perusahaan') onNavigate('company-dashboard');
         else if (target.role === 'admin') onNavigate('admin-dashboard');
-      }
-    }
-  };
-
-  const handleResetData = () => {
-    if (window.confirm('Reset semua data ke kondisi demo awal?')) {
-      resetToDemoData();
-      if (onResetDemo) {
-        onResetDemo();
-      } else {
-        onNotify?.('Data berhasil di-reset ke kondisi demo awal!');
-        window.location.reload();
       }
     }
   };
@@ -126,7 +113,8 @@ export const Navbar: React.FC<NavbarProps> = ({
           <div
             onClick={() => {
               if (onNavigate) {
-                if (currentUser?.role === 'mahasiswa') onNavigate('jobs');
+                if (currentUser?.role === 'siswa_sma') onNavigate('siswa-dashboard');
+                else if (currentUser?.role === 'mahasiswa') onNavigate('jobs');
                 else if (currentUser?.role === 'perusahaan') onNavigate('company-dashboard');
                 else if (currentUser?.role === 'admin') onNavigate('admin-dashboard');
                 else onNavigate('jobs');
@@ -179,6 +167,21 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </div>
                 <div className="space-y-1">
                   <button
+                    onClick={() => handleSwitchUser('user-siswa-1')}
+                    className={`w-full flex items-center gap-2.5 p-2 rounded-lg text-left text-xs transition-colors ${
+                      currentUser.id === 'user-siswa-1'
+                        ? 'bg-amber-50 text-amber-900 dark:bg-amber-950/50 dark:text-amber-200 font-bold'
+                        : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
+                    }`}
+                  >
+                    <School className="w-4 h-4 text-amber-600 shrink-0" />
+                    <div>
+                      <div>Anisa Rahmawati</div>
+                      <div className="text-[10px] text-slate-500">🎒 Siswa SMA / SMK (PKL)</div>
+                    </div>
+                  </button>
+
+                  <button
                     onClick={() => handleSwitchUser('user-stud-1')}
                     className={`w-full flex items-center gap-2.5 p-2 rounded-lg text-left text-xs transition-colors ${
                       currentUser.id === 'user-stud-1'
@@ -189,7 +192,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     <GraduationCap className="w-4 h-4 text-emerald-600 shrink-0" />
                     <div>
                       <div>Dimas Pratama</div>
-                      <div className="text-[10px] text-slate-500">Mahasiswa (UI)</div>
+                      <div className="text-[10px] text-slate-500">🎓 Mahasiswa (UI)</div>
                     </div>
                   </button>
 
@@ -230,16 +233,6 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Right Actions: Dark Mode, Notifications, User Menu */}
         <div className="flex items-center gap-2 sm:gap-3">
-          {/* Reset Demo Data Button */}
-          <button
-            onClick={handleResetData}
-            title="Reset ke Data Demo Awal"
-            className="p-2 rounded-xl text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors hidden lg:flex items-center gap-1.5 text-xs font-medium"
-          >
-            <RotateCcw className="w-4 h-4" />
-            <span>Reset Demo</span>
-          </button>
-
           {/* Dark Mode Toggle */}
           <button
             onClick={onToggleDarkMode}

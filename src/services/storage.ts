@@ -10,6 +10,7 @@ import {
   CompanyVerificationStatus,
   JobStatus,
   UserRole,
+  PklLogbookEntry,
 } from '../types';
 import {
   INITIAL_USERS,
@@ -19,6 +20,7 @@ import {
   INITIAL_APPLICATIONS,
   INITIAL_NOTIFICATIONS,
   INITIAL_ACTIVITY_LOGS,
+  INITIAL_PKL_LOGS,
 } from '../data/mockData';
 import {
   seedFirestoreIfEmpty,
@@ -32,15 +34,16 @@ import {
 } from './firestoreSync';
 
 const STORAGE_KEYS = {
-  USERS: 'internspace_users_v1',
-  CURRENT_USER: 'internspace_current_user_v1',
-  STUDENT_PROFILES: 'internspace_student_profiles_v1',
-  COMPANY_PROFILES: 'internspace_company_profiles_v1',
-  JOBS: 'internspace_jobs_v1',
-  APPLICATIONS: 'internspace_applications_v1',
-  NOTIFICATIONS: 'internspace_notifications_v1',
-  ACTIVITY_LOGS: 'internspace_logs_v1',
-  BOOKMARKS: 'internspace_bookmarks_v1',
+  USERS: 'internspace_users_v2',
+  CURRENT_USER: 'internspace_current_user_v2',
+  STUDENT_PROFILES: 'internspace_student_profiles_v2',
+  COMPANY_PROFILES: 'internspace_company_profiles_v2',
+  JOBS: 'internspace_jobs_v2',
+  APPLICATIONS: 'internspace_applications_v2',
+  NOTIFICATIONS: 'internspace_notifications_v2',
+  ACTIVITY_LOGS: 'internspace_logs_v2',
+  BOOKMARKS: 'internspace_bookmarks_v2',
+  PKL_LOGS: 'internspace_pkl_logs_v2',
   DARK_MODE: 'internspace_dark_mode_v1',
 };
 
@@ -87,13 +90,20 @@ export function initializeStorage(): void {
   if (!localStorage.getItem(STORAGE_KEYS.ACTIVITY_LOGS)) {
     setItem(STORAGE_KEYS.ACTIVITY_LOGS, INITIAL_ACTIVITY_LOGS);
   }
+  if (!localStorage.getItem(STORAGE_KEYS.PKL_LOGS)) {
+    setItem(STORAGE_KEYS.PKL_LOGS, INITIAL_PKL_LOGS);
+  }
   if (!localStorage.getItem(STORAGE_KEYS.BOOKMARKS)) {
-    setItem(STORAGE_KEYS.BOOKMARKS, { 'user-stud-1': ['job-2', 'job-3'] });
+    setItem(STORAGE_KEYS.BOOKMARKS, {
+      'user-stud-1': ['job-1', 'job-4'],
+      'user-siswa-1': ['job-smk-1', 'job-smk-2'],
+    });
   }
 
-  // Default login to student Dimas Pratama if no current user set
+  // Default login: default to Siswa SMA (Anisa Rahmawati) to showcase the newly requested POV
   if (!localStorage.getItem(STORAGE_KEYS.CURRENT_USER)) {
-    setItem(STORAGE_KEYS.CURRENT_USER, INITIAL_USERS[5]); // Dimas Pratama
+    const defaultSiswa = INITIAL_USERS.find((u) => u.id === 'user-siswa-1') || INITIAL_USERS[0];
+    setItem(STORAGE_KEYS.CURRENT_USER, defaultSiswa);
   }
 
   // Seed Firestore in background if newly connected
@@ -111,6 +121,7 @@ export function resetToDemoData(): void {
   localStorage.removeItem(STORAGE_KEYS.NOTIFICATIONS);
   localStorage.removeItem(STORAGE_KEYS.ACTIVITY_LOGS);
   localStorage.removeItem(STORAGE_KEYS.BOOKMARKS);
+  localStorage.removeItem(STORAGE_KEYS.PKL_LOGS);
   initializeStorage();
   window.dispatchEvent(new Event('internspace_data_changed'));
 }
@@ -170,6 +181,11 @@ export function registerUser(params: {
   kota?: string;
   website?: string;
   noHp?: string;
+  namaSekolah?: string;
+  kelas?: string;
+  nisn?: string;
+  guruPembimbing?: string;
+  kontakGuru?: string;
 }): { success: boolean; user?: User; error?: string } {
   const users = getUsers();
   const emailExists = users.some((u) => u.email.toLowerCase() === params.email.toLowerCase());
@@ -187,6 +203,8 @@ export function registerUser(params: {
     avatarUrl:
       params.role === 'perusahaan'
         ? 'https://images.unsplash.com/photo-1577495508048-b635879837f1?w=150&auto=format&fit=crop&q=80'
+        : params.role === 'siswa_sma'
+        ? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
         : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
     createdAt: new Date().toISOString(),
     isBlocked: false,
@@ -204,12 +222,36 @@ export function registerUser(params: {
       universitas: params.universitas || 'Universitas Indonesia',
       jurusan: params.jurusan || 'Teknik Informatika',
       semester: params.semester || 5,
+      jenjang: 'mahasiswa',
       noHp: params.noHp || '081234567890',
       fotoUrl: newUser.avatarUrl || '',
       cvUrl: 'https://example.com/cv.pdf',
       cvFileName: `CV_${params.nama.replace(/\s+/g, '_')}.pdf`,
       skills: ['Problem Solving', 'Teamwork', 'Communication'],
       bio: 'Mahasiswa yang antusias mencari pengalaman magang baru.',
+      completedInternships: [],
+    };
+    setItem(STORAGE_KEYS.STUDENT_PROFILES, studentProfiles);
+  } else if (params.role === 'siswa_sma') {
+    const studentProfiles = getItem<Record<string, StudentProfile>>(STORAGE_KEYS.STUDENT_PROFILES, {});
+    studentProfiles[newUserId] = {
+      userId: newUserId,
+      nama: params.nama,
+      universitas: params.namaSekolah || params.universitas || 'SMK Negeri 1 Jakarta',
+      namaSekolah: params.namaSekolah || params.universitas || 'SMK Negeri 1 Jakarta',
+      jurusan: params.jurusan || 'Rekayasa Perangkat Lunak (RPL)',
+      semester: params.semester || 11,
+      kelas: params.kelas || 'Kelas XI (11) SMK',
+      jenjang: 'siswa_sma',
+      nisn: params.nisn || '0061298451',
+      guruPembimbing: params.guruPembimbing || 'Drs. Bambang Hidayat, M.Kom',
+      kontakGuru: params.kontakGuru || '081298765432',
+      noHp: params.noHp || '081234567890',
+      fotoUrl: newUser.avatarUrl || '',
+      cvUrl: 'https://example.com/cv-siswa.pdf',
+      cvFileName: `CV_PKL_${params.nama.replace(/\s+/g, '_')}.pdf`,
+      skills: ['Disiplin Waktu', 'Kerja Sama Tim', 'Komunikasi Ramah', 'Penggunaan Komputer'],
+      bio: 'Siswa SMA/SMK yang antusias mengikuti program magang atau PKL resmi industri.',
       completedInternships: [],
     };
     setItem(STORAGE_KEYS.STUDENT_PROFILES, studentProfiles);
@@ -703,4 +745,40 @@ export function setDarkMode(value: boolean): void {
   } else {
     document.documentElement.classList.remove('dark');
   }
+}
+
+// --- PKL Logbook Functions (Khusus Siswa SMA / SMK & Magang) ---
+export function getPklLogs(studentId?: string): PklLogbookEntry[] {
+  const logs = getItem<PklLogbookEntry[]>(STORAGE_KEYS.PKL_LOGS, INITIAL_PKL_LOGS);
+  if (studentId) {
+    return logs.filter((l) => l.studentId === studentId);
+  }
+  return logs;
+}
+
+export function savePklLog(log: PklLogbookEntry): void {
+  const logs = getPklLogs();
+  const index = logs.findIndex((l) => l.id === log.id);
+  if (index !== -1) {
+    logs[index] = log;
+  } else {
+    logs.unshift(log);
+  }
+  setItem(STORAGE_KEYS.PKL_LOGS, logs);
+}
+
+export function updatePklLogStatus(logId: string, status: 'disetujui' | 'revisi', catatanMentor?: string): void {
+  const logs = getPklLogs();
+  const index = logs.findIndex((l) => l.id === logId);
+  if (index !== -1) {
+    logs[index].statusVerifikasi = status;
+    if (catatanMentor) logs[index].catatanMentor = catatanMentor;
+    setItem(STORAGE_KEYS.PKL_LOGS, logs);
+  }
+}
+
+export function deletePklLog(logId: string): void {
+  const logs = getPklLogs();
+  const filtered = logs.filter((l) => l.id !== logId);
+  setItem(STORAGE_KEYS.PKL_LOGS, filtered);
 }

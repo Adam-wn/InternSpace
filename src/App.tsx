@@ -6,7 +6,6 @@ import {
   getUsers,
   getNotifications,
   markAllNotificationsAsRead,
-  getJobs,
   initializeStorage,
   getDarkMode,
   setDarkMode,
@@ -17,7 +16,12 @@ import { AuthModal } from './components/auth/AuthModal';
 import { NotificationModal } from './components/NotificationModal';
 import { ToastContainer, ToastItem } from './components/common/Toast';
 
-// Student views
+// Siswa SMA/SMK views (POV Baru!)
+import { SiswaDashboard } from './components/siswa/SiswaDashboard';
+import { SiswaLogbook } from './components/siswa/SiswaLogbook';
+import { SiswaProfileView } from './components/siswa/SiswaProfileView';
+
+// Student views (Mahasiswa)
 import { JobsExplorer } from './components/student/JobsExplorer';
 import { StudentDashboard } from './components/student/StudentDashboard';
 import { MyApplications } from './components/student/MyApplications';
@@ -37,11 +41,24 @@ import { JobModeration } from './components/admin/JobModeration';
 import { UserManagement } from './components/admin/UserManagement';
 import { ActivityLogs } from './components/admin/ActivityLogs';
 
-import { Menu, X, Sparkles, Compass, ShieldCheck, Building2, User as UserIcon } from 'lucide-react';
+import {
+  X,
+  ShieldCheck,
+  Building2,
+  User as UserIcon,
+  School,
+  Sparkles,
+} from 'lucide-react';
 
 export default function App() {
   const [currentUser, setUser] = useState<User | null>(() => getCurrentUser());
-  const [currentView, setCurrentView] = useState<string>('jobs');
+  const [currentView, setCurrentView] = useState<string>(() => {
+    const user = getCurrentUser();
+    if (user?.role === 'siswa_sma') return 'siswa-dashboard';
+    if (user?.role === 'perusahaan') return 'company-dashboard';
+    if (user?.role === 'admin') return 'admin-dashboard';
+    return 'jobs';
+  });
   const [filterJobIdForApplicants, setFilterJobIdForApplicants] = useState<string | null>(null);
 
   // Modals & UI States
@@ -117,6 +134,8 @@ export default function App() {
     setUser(newUser);
     if (!newUser) {
       setCurrentView('jobs');
+    } else if (newUser.role === 'siswa_sma') {
+      setCurrentView('siswa-dashboard');
     } else if (newUser.role === 'mahasiswa') {
       setCurrentView('jobs');
     } else if (newUser.role === 'perusahaan') {
@@ -133,7 +152,15 @@ export default function App() {
     if (target) {
       setCurrentUser(target);
       handleUserChange(target);
-      addToast(`Beralih peran ke: ${role.toUpperCase()} (${target.nama})`, 'info');
+      const roleLabel =
+        role === 'siswa_sma'
+          ? 'SISWA SMA/SMK (PKL)'
+          : role === 'mahasiswa'
+          ? 'MAHASISWA'
+          : role === 'perusahaan'
+          ? 'MITRA PERUSAHAAN'
+          : 'ADMIN';
+      addToast(`Beralih peran ke: ${roleLabel} (${target.nama})`, 'info');
     }
   };
 
@@ -176,52 +203,73 @@ export default function App() {
         onNotify={(msg) => addToast(msg, 'info')}
       />
 
-      {/* Quick Role Switch Bar for Easy Testing */}
-      <div className="bg-indigo-900/90 text-white px-4 py-2 text-xs border-b border-indigo-800 flex flex-wrap items-center justify-between gap-2 z-20">
+      {/* Quick Role Switch Bar for Easy Testing across all 4 Roles */}
+      <div className="bg-slate-900 text-white px-4 py-2 text-xs border-b border-slate-800 flex flex-wrap items-center justify-between gap-2 z-20 shadow-xs">
         <div className="flex items-center gap-2">
-          <span className="font-extrabold uppercase tracking-wider text-[10px] bg-indigo-500/40 px-2 py-0.5 rounded-full border border-indigo-400/30">
-            Pilih Peran Demo:
+          <span className="font-extrabold uppercase tracking-wider text-[10px] bg-indigo-500/30 text-indigo-300 px-2.5 py-0.5 rounded-full border border-indigo-500/30 flex items-center gap-1">
+            <Sparkles className="w-3 h-3 text-amber-400" />
+            Uji POV Peran Cepat:
           </span>
-          <span className="text-indigo-200 hidden sm:inline">
-            Uji alur multi-peran secara instan:
+          <span className="text-slate-300 hidden md:inline text-[11px]">
+            Beralih instan antara Siswa SMA/SMK, Mahasiswa, Perusahaan, dan Admin:
           </span>
         </div>
 
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {/* 1. Siswa SMA / SMK */}
+          <button
+            onClick={() => handleRoleSwitch('siswa_sma')}
+            id="role-switch-siswa"
+            className={`px-3 py-1 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+              currentUser?.role === 'siswa_sma'
+                ? 'bg-amber-400 text-slate-950 shadow-md ring-2 ring-amber-400/40'
+                : 'bg-slate-800 hover:bg-slate-700 text-amber-300'
+            }`}
+          >
+            <School className="w-3.5 h-3.5" />
+            <span>🎒 Siswa SMA / SMK</span>
+          </button>
+
+          {/* 2. Mahasiswa */}
           <button
             onClick={() => handleRoleSwitch('mahasiswa')}
-            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${
+            id="role-switch-mahasiswa"
+            className={`px-3 py-1 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
               currentUser?.role === 'mahasiswa'
-                ? 'bg-white text-indigo-950 shadow-xs'
-                : 'bg-indigo-800/80 hover:bg-indigo-700 text-indigo-100'
+                ? 'bg-emerald-400 text-slate-950 shadow-md ring-2 ring-emerald-400/40'
+                : 'bg-slate-800 hover:bg-slate-700 text-emerald-300'
             }`}
           >
-            <UserIcon className="w-3 h-3" />
-            <span>Mahasiswa</span>
+            <UserIcon className="w-3.5 h-3.5" />
+            <span>🎓 Mahasiswa</span>
           </button>
 
+          {/* 3. Mitra Perusahaan */}
           <button
             onClick={() => handleRoleSwitch('perusahaan')}
-            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${
+            id="role-switch-perusahaan"
+            className={`px-3 py-1 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
               currentUser?.role === 'perusahaan'
-                ? 'bg-white text-indigo-950 shadow-xs'
-                : 'bg-indigo-800/80 hover:bg-indigo-700 text-indigo-100'
+                ? 'bg-sky-400 text-slate-950 shadow-md ring-2 ring-sky-400/40'
+                : 'bg-slate-800 hover:bg-slate-700 text-sky-300'
             }`}
           >
-            <Building2 className="w-3 h-3" />
-            <span>Mitra Perusahaan</span>
+            <Building2 className="w-3.5 h-3.5" />
+            <span>🏢 Mitra Perusahaan</span>
           </button>
 
+          {/* 4. Admin */}
           <button
             onClick={() => handleRoleSwitch('admin')}
-            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${
+            id="role-switch-admin"
+            className={`px-3 py-1 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
               currentUser?.role === 'admin'
-                ? 'bg-white text-indigo-950 shadow-xs'
-                : 'bg-indigo-800/80 hover:bg-indigo-700 text-indigo-100'
+                ? 'bg-purple-400 text-slate-950 shadow-md ring-2 ring-purple-400/40'
+                : 'bg-slate-800 hover:bg-slate-700 text-purple-300'
             }`}
           >
-            <ShieldCheck className="w-3 h-3" />
-            <span>Admin</span>
+            <ShieldCheck className="w-3.5 h-3.5" />
+            <span>🛡️ Admin</span>
           </button>
         </div>
       </div>
@@ -249,7 +297,7 @@ export default function App() {
                   <div className="font-extrabold text-sm text-indigo-600">Navigasi Menu</div>
                   <button
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="p-1 rounded-lg text-slate-400 hover:text-slate-600"
+                    className="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer"
                   >
                     <X className="w-5 h-5" />
                   </button>
@@ -267,7 +315,7 @@ export default function App() {
               </div>
 
               <div className="pt-4 border-t border-slate-200 dark:border-slate-800 text-xs text-slate-400">
-                InternSpace Platform v1.0
+                InternSpace Platform • PKL & Magang Terpadu
               </div>
             </div>
             <div className="flex-1" onClick={() => setIsMobileMenuOpen(false)} />
@@ -276,8 +324,63 @@ export default function App() {
 
         {/* Main Content Area */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8 min-w-0">
-          {/* GUEST OR MAHASISWA VIEWS */}
-          {(!currentUser || currentUser.role === 'mahasiswa') && (
+          {/* GUEST (NOT LOGGED IN) */}
+          {!currentUser && (
+            <>
+              {currentView === 'jobs' && (
+                <JobsExplorer
+                  currentUser={null}
+                  onNotify={addToast}
+                  onNavigateToAuth={() => handleOpenAuth('login')}
+                />
+              )}
+            </>
+          )}
+
+          {/* SISWA SMA / SMK VIEWS (POV BARU!) */}
+          {currentUser && currentUser.role === 'siswa_sma' && (
+            <>
+              {currentView === 'siswa-dashboard' && (
+                <SiswaDashboard
+                  currentUser={currentUser}
+                  onNavigate={(view) => setCurrentView(view)}
+                />
+              )}
+              {currentView === 'jobs' && (
+                <JobsExplorer
+                  currentUser={currentUser}
+                  onNotify={addToast}
+                  onNavigateToAuth={() => handleOpenAuth('login')}
+                />
+              )}
+              {currentView === 'siswa-logbook' && (
+                <SiswaLogbook
+                  currentUser={currentUser}
+                  onNotify={addToast}
+                />
+              )}
+              {currentView === 'applications' && (
+                <MyApplications
+                  currentUser={currentUser}
+                  onNotify={addToast}
+                  onNavigateToJobs={() => setCurrentView('jobs')}
+                />
+              )}
+              {currentView === 'saved-jobs' && (
+                <SavedJobs
+                  currentUser={currentUser}
+                  onNotify={addToast}
+                  onNavigateToJobs={() => setCurrentView('jobs')}
+                />
+              )}
+              {currentView === 'profile' && (
+                <SiswaProfileView currentUser={currentUser} onNotify={addToast} />
+              )}
+            </>
+          )}
+
+          {/* MAHASISWA VIEWS */}
+          {currentUser && currentUser.role === 'mahasiswa' && (
             <>
               {currentView === 'jobs' && (
                 <JobsExplorer
@@ -286,27 +389,27 @@ export default function App() {
                   onNavigateToAuth={() => handleOpenAuth('login')}
                 />
               )}
-              {currentUser && currentView === 'student-dashboard' && (
+              {currentView === 'student-dashboard' && (
                 <StudentDashboard
                   currentUser={currentUser}
                   onNavigate={(view) => setCurrentView(view)}
                 />
               )}
-              {currentUser && currentView === 'applications' && (
+              {currentView === 'applications' && (
                 <MyApplications
                   currentUser={currentUser}
                   onNotify={addToast}
                   onNavigateToJobs={() => setCurrentView('jobs')}
                 />
               )}
-              {currentUser && currentView === 'saved-jobs' && (
+              {currentView === 'saved-jobs' && (
                 <SavedJobs
                   currentUser={currentUser}
                   onNotify={addToast}
                   onNavigateToJobs={() => setCurrentView('jobs')}
                 />
               )}
-              {currentUser && currentView === 'profile' && (
+              {currentView === 'profile' && (
                 <StudentProfileView currentUser={currentUser} onNotify={addToast} />
               )}
             </>
@@ -374,8 +477,13 @@ export default function App() {
           initialMode={authInitialMode}
           onClose={() => setIsAuthModalOpen(false)}
           onSuccess={(user) => {
-            handleUserChange(user);
-            addToast(`Selamat datang, ${user.nama}! Berhasil masuk sebagai ${user.role}.`, 'success');
+            const roleLabel =
+              typeof user === 'string'
+                ? user
+                : user?.nama
+                ? `Selamat datang, ${user.nama}!`
+                : 'Berhasil masuk!';
+            addToast(roleLabel, 'success');
           }}
           onNotify={addToast}
         />
