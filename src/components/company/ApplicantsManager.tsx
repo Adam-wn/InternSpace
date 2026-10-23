@@ -8,11 +8,13 @@ import {
 } from '../../services/storage';
 import { ApplicationStatusBadge } from '../common/Badge';
 import { Modal } from '../common/Modal';
+import { exportApplicantsToPDF } from '../../services/pdfExport';
 import {
   Users,
   Search,
   Filter,
   Download,
+  FileDown,
   FileText,
   Video,
   CheckCircle2,
@@ -115,6 +117,30 @@ export const ApplicantsManager: React.FC<ApplicantsManagerProps> = ({
     onNotify('Daftar pelamar berhasil diunduh sebagai file CSV.', 'success');
   };
 
+  // Export to PDF Function
+  const handleExportPDF = () => {
+    if (filteredApplicants.length === 0) {
+      onNotify('Tidak ada data pelamar untuk diekspor ke PDF.', 'info');
+      return;
+    }
+    try {
+      exportApplicantsToPDF({
+        companyUser: currentUser,
+        applications: filteredApplicants,
+        allJobs,
+        selectedJobId,
+        selectedStatus,
+      });
+      onNotify(
+        `Berhasil mengekspor ${filteredApplicants.length} data pelamar ke dokumen PDF!`,
+        'success'
+      );
+    } catch (err) {
+      console.error('Failed to export applicants to PDF:', err);
+      onNotify('Gagal mengekspor PDF pelamar. Silakan coba lagi.', 'error');
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -128,14 +154,27 @@ export const ApplicantsManager: React.FC<ApplicantsManagerProps> = ({
           </p>
         </div>
 
-        <button
-          onClick={handleExportCSV}
-          id="btn-export-applicants"
-          className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/50 text-slate-700 dark:text-slate-200 text-xs font-bold shadow-xs transition-colors flex items-center gap-1.5 self-start sm:self-auto"
-        >
-          <Download className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-          <span>Ekspor Data CSV</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+          <button
+            onClick={handleExportPDF}
+            id="btn-export-applicants-pdf"
+            className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-md shadow-rose-600/20 transition-all flex items-center gap-1.5 cursor-pointer"
+            title="Unduh rekapitulasi data pelamar dalam format PDF untuk keperluan administrasi/rapat"
+          >
+            <FileDown className="w-4 h-4" />
+            <span>Export to PDF</span>
+          </button>
+
+          <button
+            onClick={handleExportCSV}
+            id="btn-export-applicants"
+            className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/50 text-slate-700 dark:text-slate-200 text-xs font-semibold shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+            title="Unduh data pelamar untuk spreadsheet Excel/CSV"
+          >
+            <Download className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+            <span>Ekspor CSV</span>
+          </button>
+        </div>
       </div>
 
       {/* Filters & Search */}

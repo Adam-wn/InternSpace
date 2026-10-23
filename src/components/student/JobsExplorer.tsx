@@ -30,18 +30,21 @@ import {
   GraduationCap,
   ShieldCheck,
   Award,
+  MessageCircle,
 } from 'lucide-react';
 
 interface JobsExplorerProps {
   currentUser: User | null;
   onNotify: (message: string, type?: 'success' | 'error' | 'info') => void;
   onNavigateToAuth: () => void;
+  onOpenChat?: (companyId: string, companyName: string, companyLogo?: string, job?: JobListing) => void;
 }
 
 export const JobsExplorer: React.FC<JobsExplorerProps> = ({
   currentUser,
   onNotify,
   onNavigateToAuth,
+  onOpenChat,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Semua');
@@ -533,6 +536,27 @@ export const JobsExplorer: React.FC<JobsExplorerProps> = ({
                     </div>
 
                     <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!currentUser) {
+                            onNotify('Silakan login terlebih dahulu untuk mengirim pesan ke perusahaan.', 'info');
+                            onNavigateToAuth();
+                            return;
+                          }
+                          if (onOpenChat) {
+                            onOpenChat(job.companyId, job.companyName, job.companyLogo, job);
+                          }
+                        }}
+                        id={`chat-company-btn-${job.id}`}
+                        className="px-3 py-1.5 rounded-xl border border-indigo-200 dark:border-indigo-800/80 bg-indigo-50/70 hover:bg-indigo-100 dark:bg-indigo-950/40 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 text-xs font-bold transition-colors flex items-center gap-1 cursor-pointer"
+                        title={`Kirim pesan langsung ke HR ${job.companyName}`}
+                      >
+                        <MessageCircle className="w-3.5 h-3.5" />
+                        <span>Chat</span>
+                      </button>
+
                       {alreadyApplied ? (
                         <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 text-xs font-bold">
                           <CheckCircle2 className="w-3.5 h-3.5" />
@@ -684,6 +708,25 @@ export const JobsExplorer: React.FC<JobsExplorerProps> = ({
                 className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 cursor-pointer"
               >
                 Tutup
+              </button>
+
+              <button
+                type="button"
+                id="detail-chat-company-button"
+                onClick={() => {
+                  if (!currentUser) {
+                    onNotify('Silakan login terlebih dahulu untuk mengirim pesan ke perusahaan.', 'info');
+                    onNavigateToAuth();
+                    return;
+                  }
+                  if (onOpenChat) {
+                    onOpenChat(detailJob.companyId, detailJob.companyName, detailJob.companyLogo, detailJob);
+                  }
+                }}
+                className="px-4 py-2.5 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950/50 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <MessageCircle className="w-4 h-4" />
+                <span>Chat Perusahaan</span>
               </button>
 
               {hasApplied(detailJob.id) ? (

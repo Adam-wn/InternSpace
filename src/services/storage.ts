@@ -11,6 +11,8 @@ import {
   JobStatus,
   UserRole,
   PklLogbookEntry,
+  ChatMessage,
+  Conversation,
 } from '../types';
 import {
   INITIAL_USERS,
@@ -21,6 +23,8 @@ import {
   INITIAL_NOTIFICATIONS,
   INITIAL_ACTIVITY_LOGS,
   INITIAL_PKL_LOGS,
+  INITIAL_CONVERSATIONS,
+  INITIAL_CHAT_MESSAGES,
 } from '../data/mockData';
 import {
   seedFirestoreIfEmpty,
@@ -45,6 +49,8 @@ const STORAGE_KEYS = {
   BOOKMARKS: 'internspace_bookmarks_v2',
   PKL_LOGS: 'internspace_pkl_logs_v2',
   DARK_MODE: 'internspace_dark_mode_v1',
+  CONVERSATIONS: 'internspace_conversations_v2',
+  CHATS: 'internspace_chats_v2',
 };
 
 export const SYSTEM_ADMIN_EMAIL = 'adamvkedua2@gmail.com';
@@ -75,6 +81,13 @@ export function initializeStorage(): void {
   if (!existingUsers.length) {
     setItem(STORAGE_KEYS.USERS, INITIAL_USERS);
   } else {
+    // Check for any missing users in INITIAL_USERS (especially the 10 target companies)
+    const existingEmails = new Set(existingUsers.map((u) => u.email.toLowerCase()));
+    const missingUsers = INITIAL_USERS.filter((u) => !existingEmails.has(u.email.toLowerCase()));
+    if (missingUsers.length > 0) {
+      existingUsers.push(...missingUsers);
+    }
+
     // Ensure adamvkedua2@gmail.com is configured as the unique admin
     const adminIdx = existingUsers.findIndex((u) => u.email.toLowerCase() === SYSTEM_ADMIN_EMAIL.toLowerCase());
     if (adminIdx === -1) {
@@ -88,23 +101,43 @@ export function initializeStorage(): void {
         createdAt: '2025-01-01T08:00:00.000Z',
         isBlocked: false,
       });
-      setItem(STORAGE_KEYS.USERS, existingUsers);
     } else {
       existingUsers[adminIdx].role = 'admin';
       existingUsers[adminIdx].nama = 'Adam (Admin Utama)';
-      setItem(STORAGE_KEYS.USERS, existingUsers);
     }
+    setItem(STORAGE_KEYS.USERS, existingUsers);
   }
 
   if (!localStorage.getItem(STORAGE_KEYS.STUDENT_PROFILES)) {
     setItem(STORAGE_KEYS.STUDENT_PROFILES, INITIAL_STUDENT_PROFILES);
   }
-  if (!localStorage.getItem(STORAGE_KEYS.COMPANY_PROFILES)) {
-    setItem(STORAGE_KEYS.COMPANY_PROFILES, INITIAL_COMPANY_PROFILES);
+
+  // Company profiles auto-merge
+  const existingCompProfiles = getItem<Record<string, CompanyProfile>>(STORAGE_KEYS.COMPANY_PROFILES, {});
+  let compChanged = false;
+  for (const [key, profile] of Object.entries(INITIAL_COMPANY_PROFILES)) {
+    if (!existingCompProfiles[key]) {
+      existingCompProfiles[key] = profile;
+      compChanged = true;
+    }
   }
-  if (!localStorage.getItem(STORAGE_KEYS.JOBS)) {
+  if (compChanged || !localStorage.getItem(STORAGE_KEYS.COMPANY_PROFILES)) {
+    setItem(STORAGE_KEYS.COMPANY_PROFILES, existingCompProfiles);
+  }
+
+  // Jobs auto-merge
+  const existingJobs = getItem<JobListing[]>(STORAGE_KEYS.JOBS, []);
+  if (!existingJobs.length) {
     setItem(STORAGE_KEYS.JOBS, INITIAL_JOBS);
+  } else {
+    const existingJobIds = new Set(existingJobs.map((j) => j.id));
+    const missingJobs = INITIAL_JOBS.filter((j) => !existingJobIds.has(j.id));
+    if (missingJobs.length > 0) {
+      existingJobs.push(...missingJobs);
+      setItem(STORAGE_KEYS.JOBS, existingJobs);
+    }
   }
+
   if (!localStorage.getItem(STORAGE_KEYS.APPLICATIONS)) {
     setItem(STORAGE_KEYS.APPLICATIONS, INITIAL_APPLICATIONS);
   }
@@ -122,6 +155,14 @@ export function initializeStorage(): void {
       'user-stud-1': ['job-1', 'job-4'],
       'user-siswa-1': ['job-smk-1', 'job-smk-2'],
     });
+  }
+
+  // Chats & Conversations
+  if (!localStorage.getItem(STORAGE_KEYS.CONVERSATIONS)) {
+    setItem(STORAGE_KEYS.CONVERSATIONS, INITIAL_CONVERSATIONS);
+  }
+  if (!localStorage.getItem(STORAGE_KEYS.CHATS)) {
+    setItem(STORAGE_KEYS.CHATS, INITIAL_CHAT_MESSAGES);
   }
 
   // NOTE: User must log in first ("user harus login dulu"). We do NOT set default login.
@@ -142,6 +183,8 @@ export function resetToDemoData(): void {
   localStorage.removeItem(STORAGE_KEYS.ACTIVITY_LOGS);
   localStorage.removeItem(STORAGE_KEYS.BOOKMARKS);
   localStorage.removeItem(STORAGE_KEYS.PKL_LOGS);
+  localStorage.removeItem(STORAGE_KEYS.CONVERSATIONS);
+  localStorage.removeItem(STORAGE_KEYS.CHATS);
   initializeStorage();
   window.dispatchEvent(new Event('internspace_data_changed'));
 }
@@ -850,3 +893,84 @@ export function deletePklLog(logId: string): void {
   const filtered = logs.filter((l) => l.id !== logId);
   setItem(STORAGE_KEYS.PKL_LOGS, filtered);
 }
+
+// --- Chat & Conversation Operations ---
+export function getConversations(): Conversation[] {
+  return getItem<Conversation[]>(STORAGE_KEYS.CONVERSATIONS, INITIAL_CONVERSATIONS);
+}
+
+export function getConversationById(id: string): Conversation | undefined {
+  return getConversations().find((c) => c.id === id);
+}
+
+export function saveConversation(conv: Conversation): void {
+  const list = getConversations();
+  const index = list.findIndex((c) => c.id === conv.id);
+  if (index !== -1) {
+    list[index] = conv;
+  } else {
+    list.unshift(conv);
+  }
+  setItem(STORAGE_KEYS.CONVERSATIONS, list);
+}
+
+export function getChatMessages(conversationId?: string): ChatMessage[] {
+  const all = getItem<ChatMessage[]>(STORAGE_KEYS.CHATS, INITIAL_CHAT_MESSAGES);
+  if (!conversationId) return all;
+  return all.filter((m) => m.conversationId === conversationId);
+}
+
+export function saveChatMessage(msg: ChatMessage): void {
+  const all = getItem<ChatMessage[]>(STORAGE_KEYS.CHATS, INITIAL_CHAT_MESSAGES);
+  const idx = all.findIndex((m) => m.id === msg.id);
+  if (idx !== -1) {
+    all[idx] = msg;
+  } else {
+    all.push(msg);
+  }
+  setItem(STORAGE_KEYS.CHATS, all);
+
+  // Update corresponding conversation summary
+  const conv = getConversationById(msg.conversationId);
+  if (conv) {
+    conv.lastMessage = msg.text;
+    conv.lastMessageTimestamp = msg.timestamp;
+    if (msg.senderRole === 'perusahaan') {
+      conv.unreadCountStudent = (conv.unreadCountStudent || 0) + 1;
+    } else {
+      conv.unreadCountCompany = (conv.unreadCountCompany || 0) + 1;
+    }
+    saveConversation(conv);
+  }
+}
+
+export function markConversationAsRead(convId: string, role: UserRole): void {
+  const conv = getConversationById(convId);
+  if (conv) {
+    if (role === 'perusahaan') {
+      conv.unreadCountCompany = 0;
+    } else if (role === 'mahasiswa' || role === 'siswa_sma') {
+      conv.unreadCountStudent = 0;
+    }
+    saveConversation(conv);
+  }
+
+  // Also mark individual messages as read
+  const msgs = getChatMessages();
+  let changed = false;
+  msgs.forEach((m) => {
+    if (m.conversationId === convId && !m.isRead) {
+      if (
+        (role === 'perusahaan' && m.senderRole !== 'perusahaan') ||
+        ((role === 'mahasiswa' || role === 'siswa_sma') && m.senderRole === 'perusahaan')
+      ) {
+        m.isRead = true;
+        changed = true;
+      }
+    }
+  });
+  if (changed) {
+    setItem(STORAGE_KEYS.CHATS, msgs);
+  }
+}
+

@@ -39,6 +39,13 @@ import { CompanyVerification } from './components/admin/CompanyVerification';
 import { JobModeration } from './components/admin/JobModeration';
 import { UserManagement } from './components/admin/UserManagement';
 import { ActivityLogs } from './components/admin/ActivityLogs';
+import { AdminChatsView } from './components/admin/AdminChatsView';
+import { AdminCompaniesList } from './components/admin/AdminCompaniesList';
+
+// Chat views
+import { ChatHubView } from './components/chat/ChatHubView';
+import { ChatModal } from './components/chat/ChatModal';
+import { JobListing } from './types';
 
 import {
   X,
@@ -61,6 +68,16 @@ export default function App() {
   });
   const [filterJobIdForApplicants, setFilterJobIdForApplicants] = useState<string | null>(null);
 
+  // Chat states
+  const [isChatModalOpen, setIsChatModalOpen] = useState(false);
+  const [chatTargetCompany, setChatTargetCompany] = useState<{
+    companyId: string;
+    companyName: string;
+    companyLogo?: string;
+    job?: JobListing;
+  } | null>(null);
+  const [chatInitialConvId, setChatInitialConvId] = useState<string | undefined>(undefined);
+
   // Modals & UI States
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authInitialMode, setAuthInitialMode] = useState<'login' | 'register'>('login');
@@ -71,6 +88,21 @@ export default function App() {
   const [darkMode, setDarkModeState] = useState<boolean>(() => {
     return getDarkMode();
   });
+
+  const handleOpenChat = (
+    companyId: string,
+    companyName: string,
+    companyLogo?: string,
+    job?: JobListing
+  ) => {
+    if (!currentUser) {
+      addToast('Silakan masuk terlebih dahulu untuk mengirim pesan ke perusahaan.', 'info');
+      handleOpenAuth('login');
+      return;
+    }
+    setChatTargetCompany({ companyId, companyName, companyLogo, job });
+    setIsChatModalOpen(true);
+  };
 
   // Initialize storage and dark mode on first mount
   useEffect(() => {
@@ -414,6 +446,7 @@ export default function App() {
                   currentUser={null}
                   onNotify={addToast}
                   onNavigateToAuth={() => handleOpenAuth('login')}
+                  onOpenChat={handleOpenChat}
                 />
               </div>
             </div>
@@ -433,6 +466,17 @@ export default function App() {
                   currentUser={currentUser}
                   onNotify={addToast}
                   onNavigateToAuth={() => handleOpenAuth('login')}
+                  onOpenChat={handleOpenChat}
+                />
+              )}
+              {currentView === 'chat' && (
+                <ChatHubView
+                  currentUser={currentUser}
+                  onNotify={addToast}
+                  initialConversationId={chatInitialConvId}
+                  initialCompanyId={chatTargetCompany?.companyId}
+                  initialJobId={chatTargetCompany?.job?.id}
+                  initialJobTitle={chatTargetCompany?.job?.judul}
                 />
               )}
               {currentView === 'siswa-logbook' && (
@@ -469,12 +513,23 @@ export default function App() {
                   currentUser={currentUser}
                   onNotify={addToast}
                   onNavigateToAuth={() => handleOpenAuth('login')}
+                  onOpenChat={handleOpenChat}
                 />
               )}
               {currentView === 'student-dashboard' && (
                 <StudentDashboard
                   currentUser={currentUser}
                   onNavigate={(view) => setCurrentView(view)}
+                />
+              )}
+              {currentView === 'chat' && (
+                <ChatHubView
+                  currentUser={currentUser}
+                  onNotify={addToast}
+                  initialConversationId={chatInitialConvId}
+                  initialCompanyId={chatTargetCompany?.companyId}
+                  initialJobId={chatTargetCompany?.job?.id}
+                  initialJobTitle={chatTargetCompany?.job?.judul}
                 />
               )}
               {currentView === 'applications' && (
@@ -520,13 +575,20 @@ export default function App() {
                   filterJobId={filterJobIdForApplicants}
                 />
               )}
+              {currentView === 'chat' && (
+                <ChatHubView
+                  currentUser={currentUser}
+                  onNotify={addToast}
+                  initialConversationId={chatInitialConvId}
+                />
+              )}
               {currentView === 'company-profile' && (
                 <CompanyProfileView currentUser={currentUser} onNotify={addToast} />
               )}
             </>
           )}
 
-          {/* ADMIN VIEWS */}
+          {/* ADMIN VIEWS (STRICT ACCESS: adamvkedua2@gmail.com) */}
           {currentUser && currentUser.role === 'admin' && (
             <>
               {currentView === 'admin-dashboard' && (
@@ -535,16 +597,29 @@ export default function App() {
                   onNavigate={(view) => setCurrentView(view)}
                 />
               )}
-              {currentView === 'verify-companies' && (
+              {currentView === 'admin-chats' && (
+                <AdminChatsView
+                  currentUser={currentUser}
+                  onNotify={addToast}
+                />
+              )}
+              {currentView === 'admin-companies' && (
+                <AdminCompaniesList
+                  currentUser={currentUser}
+                  onNavigateToChats={() => setCurrentView('admin-chats')}
+                  onNotify={addToast}
+                />
+              )}
+              {(currentView === 'verify-companies' || currentView === 'admin-verify') && (
                 <CompanyVerification onNotify={addToast} />
               )}
-              {currentView === 'moderate-jobs' && (
+              {(currentView === 'moderate-jobs' || currentView === 'admin-jobs') && (
                 <JobModeration onNotify={addToast} />
               )}
-              {currentView === 'user-management' && (
+              {(currentView === 'user-management' || currentView === 'admin-users') && (
                 <UserManagement onNotify={addToast} />
               )}
-              {currentView === 'activity-logs' && (
+              {(currentView === 'activity-logs' || currentView === 'admin-logs') && (
                 <ActivityLogs />
               )}
             </>
@@ -583,6 +658,24 @@ export default function App() {
             markAllNotificationsAsRead(currentUser.id);
             refreshNotificationCount();
             addToast('Semua notifikasi telah ditandai dibaca.', 'info');
+          }}
+        />
+      )}
+
+      {/* Direct Quick Chat Modal */}
+      {isChatModalOpen && chatTargetCompany && (
+        <ChatModal
+          isOpen={isChatModalOpen}
+          currentUser={currentUser}
+          targetCompanyId={chatTargetCompany.companyId}
+          targetCompanyName={chatTargetCompany.companyName}
+          targetCompanyLogo={chatTargetCompany.companyLogo}
+          job={chatTargetCompany.job}
+          onClose={() => setIsChatModalOpen(false)}
+          onNotify={addToast}
+          onNavigateToFullChat={(convId) => {
+            setChatInitialConvId(convId);
+            setCurrentView('chat');
           }}
         />
       )}

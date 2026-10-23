@@ -8,6 +8,7 @@ import {
   getStudentProfile,
 } from '../../services/storage';
 import { Modal } from '../common/Modal';
+import { exportSiswaLogbookToPDF } from '../../services/pdfExport';
 import {
   BookOpen,
   Plus,
@@ -20,6 +21,7 @@ import {
   Printer,
   Sparkles,
   Download,
+  FileDown,
   Filter,
   Check,
   UserCheck,
@@ -102,6 +104,24 @@ export const SiswaLogbook: React.FC<SiswaLogbookProps> = ({ currentUser, onNotif
     onNotify('Catatan PKL berhasil diverifikasi dan disetujui oleh Pembimbing Industri!', 'success');
   };
 
+  const handleExportPDF = () => {
+    if (logs.length === 0) {
+      onNotify('Belum ada catatan logbook untuk diekspor ke PDF.', 'info');
+      return;
+    }
+    try {
+      exportSiswaLogbookToPDF({
+        currentUser,
+        profile,
+        logs: filteredLogs.length > 0 ? filteredLogs : logs,
+      });
+      onNotify('Dokumen Laporan Logbook PKL berhasil diekspor ke PDF!', 'success');
+    } catch (err) {
+      console.error('Failed to export logbook to PDF:', err);
+      onNotify('Gagal mengekspor PDF. Silakan coba lagi.', 'error');
+    }
+  };
+
   const filteredLogs = logs.filter((l) => {
     if (filterStatus === 'semua') return true;
     return l.statusVerifikasi === filterStatus;
@@ -127,13 +147,23 @@ export const SiswaLogbook: React.FC<SiswaLogbookProps> = ({ currentUser, onNotif
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={handleExportPDF}
+            id="btn-export-logbook-pdf"
+            className="px-3.5 py-2.5 rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50/80 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/50 text-rose-800 dark:text-rose-200 text-xs font-bold flex items-center gap-2 transition-all cursor-pointer shadow-xs"
+            title="Unduh laporan resmi Logbook PKL dalam format PDF"
+          >
+            <FileDown className="w-4 h-4 text-rose-600 dark:text-rose-400" />
+            <span>Export to PDF</span>
+          </button>
+
           <button
             onClick={() => setIsPrintModalOpen(true)}
             className="px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer"
           >
             <Printer className="w-4 h-4 text-slate-500" />
-            <span>Cetak / Ekspor Laporan</span>
+            <span>Pratinjau Format Rapor</span>
           </button>
 
           <button
@@ -141,7 +171,7 @@ export const SiswaLogbook: React.FC<SiswaLogbookProps> = ({ currentUser, onNotif
             className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold flex items-center gap-2 transition-all shadow-md shadow-amber-500/20 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
-            <span>Tambah Catatan Harian</span>
+            <span>Tambah Catatan</span>
           </button>
         </div>
       </div>
@@ -547,17 +577,29 @@ export const SiswaLogbook: React.FC<SiswaLogbookProps> = ({ currentUser, onNotif
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-2">
-              <button
-                onClick={() => {
-                  window.print();
-                  onNotify('Membuka dialog cetak dokumen laporan...', 'info');
-                }}
-                className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer"
-              >
-                <Printer className="w-4 h-4" />
-                <span>Cetak Lembar Laporan</span>
-              </button>
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-200 dark:border-slate-800">
+              <span className="text-[11px] text-slate-500">
+                Format resmi ber-KOP & kolom pengesahan siap diarsipkan atau diserahkan ke sekolah.
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleExportPDF}
+                  className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-md shadow-rose-600/20"
+                >
+                  <FileDown className="w-4 h-4" />
+                  <span>Export to PDF</span>
+                </button>
+                <button
+                  onClick={() => {
+                    window.print();
+                    onNotify('Membuka dialog cetak dokumen laporan...', 'info');
+                  }}
+                  className="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold text-xs flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Printer className="w-4 h-4" />
+                  <span>Cetak Browser</span>
+                </button>
+              </div>
             </div>
           </div>
         </Modal>

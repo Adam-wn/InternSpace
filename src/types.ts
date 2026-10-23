@@ -157,3 +157,44 @@ export interface ActivityLog {
   details: string;
   timestamp: string;
 }
+
+export interface ChatMessage {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  senderName: string;
+  senderRole: UserRole;
+  senderAvatar?: string;
+  recipientId: string;
+  recipientName: string;
+  companyId: string;
+  companyName: string;
+  studentId: string;
+  studentName: string;
+  studentInstitute?: string;
+  jobId?: string;
+  jobTitle?: string;
+  text: string;
+  timestamp: string;
+  isRead: boolean;
+}
+
+export interface Conversation {
+  id: string;
+  companyId: string;
+  companyName: string;
+  companyLogo?: string;
+  companyEmail?: string;
+  studentId: string;
+  studentName: string;
+  studentAvatar?: string;
+  studentRole: UserRole;
+  studentInstitute?: string;
+  lastMessage: string;
+  lastMessageTimestamp: string;
+  unreadCountCompany: number;
+  unreadCountStudent: number;
+  jobId?: string;
+  jobTitle?: string;
+}
+

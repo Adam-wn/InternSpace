@@ -18,6 +18,7 @@ import {
   BookOpen,
   Sun,
   Moon,
+  MessageSquare,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -120,6 +121,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </button>
 
               <button
+                onClick={() => handleNav('chat')}
+                id="nav-siswa-chat"
+                className={navItemClass('chat')}
+              >
+                <MessageSquare className="w-4 h-4 shrink-0" />
+                <span>Pesan & Tanya Mitra</span>
+              </button>
+
+              <button
                 onClick={() => handleNav('profile')}
                 id="nav-siswa-profile"
                 className={navItemClass('profile')}
@@ -162,6 +172,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
               >
                 <FileText className="w-4 h-4 shrink-0" />
                 <span>Lamaran Saya</span>
+              </button>
+
+              <button
+                onClick={() => handleNav('chat')}
+                id="nav-student-chat"
+                className={navItemClass('chat')}
+              >
+                <MessageSquare className="w-4 h-4 shrink-0" />
+                <span>Pesan & Chat Perusahaan</span>
               </button>
 
               <button
@@ -219,6 +238,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </button>
 
               <button
+                onClick={() => handleNav('chat')}
+                id="nav-company-chat"
+                className={navItemClass('chat')}
+              >
+                <MessageSquare className="w-4 h-4 shrink-0" />
+                <span>Pesan & Chat Pelamar</span>
+              </button>
+
+              <button
                 onClick={() => handleNav('company-profile')}
                 id="nav-company-profile"
                 className={navItemClass('company-profile')}
@@ -243,6 +271,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
               >
                 <LayoutDashboard className="w-4 h-4 shrink-0" />
                 <span>Dashboard Statistik</span>
+              </button>
+
+              <button
+                onClick={() => handleNav('admin-chats')}
+                id="nav-admin-chats"
+                className={navItemClass('admin-chats')}
+              >
+                <MessageSquare className="w-4 h-4 shrink-0" />
+                <span>Monitoring Chat Platform</span>
+              </button>
+
+              <button
+                onClick={() => handleNav('admin-companies')}
+                id="nav-admin-companies"
+                className={navItemClass('admin-companies')}
+              >
+                <Building2 className="w-4 h-4 shrink-0" />
+                <span>Direktori Perusahaan</span>
               </button>
 
               <button

@@ -464,29 +464,52 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         )}
 
         {selectedRole === 'perusahaan' && (
-          <button
-            type="button"
-            id="quick-demo-perusahaan-btn"
-            onClick={() =>
-              handleQuickDemoLogin('hr@teknusantara.co.id', 'perusahaan', 'Mitra Perusahaan')
-            }
-            className="w-full p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-sky-300 dark:border-sky-800 hover:bg-sky-50 dark:hover:bg-sky-950/40 text-left transition-all cursor-pointer flex items-center justify-between"
-          >
-            <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-lg bg-sky-100 dark:bg-sky-900/60 text-sky-700 dark:text-sky-300 flex items-center justify-center">
-                <Building2 className="w-3.5 h-3.5" />
-              </div>
-              <div>
-                <div className="text-xs font-bold text-slate-900 dark:text-white">
-                  PT Teknologi Nusantara (HR Recruitment)
-                </div>
-                <div className="text-[10px] text-slate-500">
-                  Software House • Masuk ke Dashboard Kelola Lowongan
-                </div>
-              </div>
+          <div className="space-y-2">
+            <div className="text-[11px] font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between">
+              <span>Masuk sebagai Akun Resmi 10 Perusahaan:</span>
+              <span className="text-[10px] text-sky-600 dark:text-sky-400 font-normal">Pilih & klik langsung</span>
             </div>
-            <ArrowRight className="w-4 h-4 text-sky-600" />
-          </button>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-48 overflow-y-auto pr-1">
+              {[
+                { name: 'Google Indonesia', email: 'careers-id@google.com', logo: 'https://images.unsplash.com/photo-1573804633927-bfcbcd909acd?w=60&auto=format&fit=crop&q=80' },
+                { name: 'Apple Dev Academy @BINUS', email: 'academy@binus.edu', logo: 'https://images.unsplash.com/photo-1611186871348-b1ce696e52c9?w=60&auto=format&fit=crop&q=80' },
+                { name: 'Samsung R&D (SRIN)', email: 'recruitment.srin@samsung.com', logo: 'https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=60&auto=format&fit=crop&q=80' },
+                { name: 'Samsung Electronics (SEIN)', email: 'hrd.sein@samsung.com', logo: 'https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=60&auto=format&fit=crop&q=80' },
+                { name: 'PT Sony Indonesia', email: 'careers@sony.co.id', logo: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=60&auto=format&fit=crop&q=80' },
+                { name: 'Microsoft Indonesia', email: 'recruitment@microsoft.com', logo: 'https://images.unsplash.com/photo-1642132652075-2b22557088b9?w=60&auto=format&fit=crop&q=80' },
+                { name: 'Oracle Indonesia', email: 'careers-id@oracle.com', logo: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=60&auto=format&fit=crop&q=80' },
+                { name: 'Gojek', email: 'internship@gojek.com', logo: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=60&auto=format&fit=crop&q=80' },
+                { name: 'Bank Central Asia (BCA)', email: 'karir@bca.co.id', logo: 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=60&auto=format&fit=crop&q=80' },
+                { name: 'Telkomsel', email: 'internship@telkomsel.co.id', logo: 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=60&auto=format&fit=crop&q=80' },
+                { name: 'PT Teknologi Nusantara', email: 'hr@teknusantara.co.id', logo: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=60&auto=format&fit=crop&q=80' },
+              ].map((comp) => (
+                <button
+                  key={comp.email}
+                  type="button"
+                  onClick={() => handleQuickDemoLogin(comp.email, 'perusahaan', comp.name)}
+                  className="p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-sky-50 dark:hover:bg-sky-950/40 text-left transition-all cursor-pointer flex items-center justify-between gap-2"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <img
+                      src={comp.logo}
+                      alt={comp.name}
+                      className="w-6 h-6 rounded-lg object-cover shrink-0 border border-slate-200"
+                    />
+                    <div className="min-w-0">
+                      <div className="text-[11px] font-bold text-slate-900 dark:text-white truncate">
+                        {comp.name}
+                      </div>
+                      <div className="text-[9px] text-slate-400 truncate">
+                        {comp.email}
+                      </div>
+                    </div>
+                  </div>
+                  <ArrowRight className="w-3.5 h-3.5 text-sky-600 shrink-0" />
+                </button>
+              ))}
+            </div>
+          </div>
         )}
       </div>
 
