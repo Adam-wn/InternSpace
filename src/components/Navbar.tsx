@@ -14,7 +14,7 @@ import {
   School,
 } from 'lucide-react';
 import { RoleBadge } from './common/Badge';
-import { setCurrentUser } from '../services/storage';
+import { setCurrentUser, SYSTEM_ADMIN_EMAIL } from '../services/storage';
 
 interface NavbarProps {
   currentUser: User | null;
@@ -90,7 +90,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 if (currentUser?.role === 'siswa_sma') onNavigate('siswa-dashboard');
                 else if (currentUser?.role === 'mahasiswa') onNavigate('jobs');
                 else if (currentUser?.role === 'perusahaan') onNavigate('company-dashboard');
-                else if (currentUser?.role === 'admin') onNavigate('admin-dashboard');
+                else if (currentUser?.role === 'admin' && currentUser?.email?.toLowerCase() === SYSTEM_ADMIN_EMAIL.toLowerCase()) onNavigate('admin-dashboard');
                 else onNavigate('jobs');
               }
             }}

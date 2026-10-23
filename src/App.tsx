@@ -8,6 +8,7 @@ import {
   initializeStorage,
   getDarkMode,
   setDarkMode,
+  SYSTEM_ADMIN_EMAIL,
 } from './services/storage';
 import { Navbar } from './components/Navbar';
 import { Sidebar } from './components/Sidebar';
@@ -170,6 +171,36 @@ export default function App() {
     refreshNotificationCount();
   }, [currentUser]);
 
+  // Security route guard: strictly protect Admin views from unauthorized users/devices
+  useEffect(() => {
+    const adminViews = [
+      'admin-dashboard',
+      'admin-chats',
+      'admin-companies',
+      'admin-verify',
+      'verify-companies',
+      'admin-jobs',
+      'moderate-jobs',
+      'admin-users',
+      'user-management',
+      'admin-logs',
+      'activity-logs',
+    ];
+    if (adminViews.includes(currentView)) {
+      if (
+        !currentUser ||
+        currentUser.role !== 'admin' ||
+        currentUser.email.toLowerCase() !== SYSTEM_ADMIN_EMAIL.toLowerCase()
+      ) {
+        setCurrentView('jobs');
+        addToast(
+          `Akses Ditolak: Panel Admin hanya dapat diakses oleh akun resmi pemilik (${SYSTEM_ADMIN_EMAIL}).`,
+          'error'
+        );
+      }
+    }
+  }, [currentView, currentUser]);
+
   // When user role changes or currentUser changes, adapt current view
   const handleUserChange = (newUser: User | null) => {
     setUser(newUser);
@@ -181,8 +212,10 @@ export default function App() {
       setCurrentView('jobs');
     } else if (newUser.role === 'perusahaan') {
       setCurrentView('company-dashboard');
-    } else if (newUser.role === 'admin') {
+    } else if (newUser.role === 'admin' && newUser.email.toLowerCase() === SYSTEM_ADMIN_EMAIL.toLowerCase()) {
       setCurrentView('admin-dashboard');
+    } else {
+      setCurrentView('jobs');
     }
     refreshNotificationCount();
   };
@@ -304,8 +337,8 @@ export default function App() {
                     Silakan masuk terlebih dahulu untuk mengakses portal dan fitur sesuai peran Anda. Pilih peran akun Anda di bawah ini:
                   </p>
 
-                  {/* 4 ROLE ENTRY CARDS */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+                  {/* 3 ROLE ENTRY CARDS (PUBLIC) */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mb-6">
                     {/* Siswa SMA / SMK */}
                     <button
                       type="button"
@@ -371,34 +404,9 @@ export default function App() {
                         <ArrowRight className="w-3.5 h-3.5" />
                       </div>
                     </button>
-
-                    {/* Admin Utama (Khusus Pemilik) */}
-                    <button
-                      type="button"
-                      id="guest-role-admin"
-                      onClick={() => handleOpenAuth('login', 'admin')}
-                      className="p-4 rounded-2xl bg-slate-800/80 hover:bg-purple-950/40 border border-slate-700 hover:border-purple-500 text-left transition-all group cursor-pointer"
-                    >
-                      <div className="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                        <ShieldCheck className="w-5 h-5" />
-                      </div>
-                      <div className="flex items-center gap-1.5 font-bold text-sm text-white group-hover:text-purple-300 transition-colors">
-                        <span>Admin Utama</span>
-                        <span className="text-[9px] bg-purple-500/30 text-purple-300 px-1.5 py-0.5 rounded font-bold border border-purple-500/30">
-                          Khusus
-                        </span>
-                      </div>
-                      <div className="text-[11px] text-slate-400 mt-1 leading-snug">
-                        Portal verifikasi perusahaan, moderasi lowongan, & pantau sistem (khusus akun Anda).
-                      </div>
-                      <div className="mt-3 text-xs font-bold text-purple-400 flex items-center gap-1">
-                        <span>Masuk Portal Admin</span>
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </div>
-                    </button>
                   </div>
 
-                  {/* Footnote with Admin Portal */}
+                  {/* Footnote */}
                   <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-800 text-xs">
                     <span className="text-slate-400 text-[11px]">
                       Belum memiliki akun?{' '}
@@ -410,15 +418,15 @@ export default function App() {
                       </button>
                     </span>
 
-                    <button
-                      type="button"
-                      id="guest-admin-portal-link"
-                      onClick={() => handleOpenAuth('login', 'admin')}
-                      className="text-[11px] text-purple-400 hover:text-purple-300 flex items-center gap-1 cursor-pointer font-medium"
-                    >
-                      <ShieldCheck className="w-3.5 h-3.5" />
-                      <span>Akses Khusus Pemilik Sistem (Admin)</span>
-                    </button>
+                    <span className="text-slate-400 text-[11px]">
+                      Sudah punya akun?{' '}
+                      <button
+                        onClick={() => handleOpenAuth('login')}
+                        className="text-indigo-400 hover:underline font-semibold cursor-pointer"
+                      >
+                        Masuk ke Akun Anda
+                      </button>
+                    </span>
                   </div>
                 </div>
               </div>
@@ -589,7 +597,7 @@ export default function App() {
           )}
 
           {/* ADMIN VIEWS (STRICT ACCESS: adamvkedua2@gmail.com) */}
-          {currentUser && currentUser.role === 'admin' && (
+          {currentUser && currentUser.role === 'admin' && currentUser.email.toLowerCase() === SYSTEM_ADMIN_EMAIL.toLowerCase() && (
             <>
               {currentView === 'admin-dashboard' && (
                 <AdminDashboard

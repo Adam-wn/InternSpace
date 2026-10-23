@@ -88,7 +88,13 @@ export function initializeStorage(): void {
       existingUsers.push(...missingUsers);
     }
 
-    // Ensure adamvkedua2@gmail.com is configured as the unique admin
+    // Ensure adamvkedua2@gmail.com is configured as the unique admin, and NO OTHER user has admin role
+    existingUsers.forEach((u) => {
+      if (u.role === 'admin' && u.email.toLowerCase() !== SYSTEM_ADMIN_EMAIL.toLowerCase()) {
+        u.role = 'mahasiswa';
+      }
+    });
+
     const adminIdx = existingUsers.findIndex((u) => u.email.toLowerCase() === SYSTEM_ADMIN_EMAIL.toLowerCase());
     if (adminIdx === -1) {
       existingUsers.unshift({
@@ -106,6 +112,13 @@ export function initializeStorage(): void {
       existingUsers[adminIdx].nama = 'Adam (Admin Utama)';
     }
     setItem(STORAGE_KEYS.USERS, existingUsers);
+
+    // Sanitize any active session in localStorage on other devices
+    const activeSession = getItem<User | null>(STORAGE_KEYS.CURRENT_USER, null);
+    if (activeSession && activeSession.role === 'admin' && activeSession.email.toLowerCase() !== SYSTEM_ADMIN_EMAIL.toLowerCase()) {
+      activeSession.role = 'mahasiswa';
+      setItem(STORAGE_KEYS.CURRENT_USER, activeSession);
+    }
   }
 
   if (!localStorage.getItem(STORAGE_KEYS.STUDENT_PROFILES)) {
@@ -191,7 +204,12 @@ export function resetToDemoData(): void {
 
 // --- Auth & User Operations ---
 export function getCurrentUser(): User | null {
-  return getItem<User | null>(STORAGE_KEYS.CURRENT_USER, null);
+  const user = getItem<User | null>(STORAGE_KEYS.CURRENT_USER, null);
+  if (user && user.role === 'admin' && user.email.toLowerCase() !== SYSTEM_ADMIN_EMAIL.toLowerCase()) {
+    user.role = 'mahasiswa';
+    setItem(STORAGE_KEYS.CURRENT_USER, user);
+  }
+  return user;
 }
 
 export function setCurrentUser(user: User | null): void {
@@ -250,28 +268,17 @@ export function registerUser(params: {
   guruPembimbing?: string;
   kontakGuru?: string;
 }): { success: boolean; user?: User; error?: string } {
-  const users = getUsers();
+  // Pendaftaran peran Admin dinonaktifkan sepenuhnya
   if (params.role === 'admin') {
-    if (params.email.trim().toLowerCase() !== SYSTEM_ADMIN_EMAIL.toLowerCase()) {
-      return {
-        success: false,
-        error: `Pendaftaran Admin ditolak: Peran Admin hanya diizinkan khusus untuk email pemilik sistem (${SYSTEM_ADMIN_EMAIL}).`,
-      };
-    }
+    return {
+      success: false,
+      error: `Pendaftaran Admin tidak diizinkan. Peran Admin hanya dipegang secara eksklusif oleh akun terverifikasi (${SYSTEM_ADMIN_EMAIL}).`,
+    };
   }
 
+  const users = getUsers();
   const emailExists = users.some((u) => u.email.toLowerCase() === params.email.trim().toLowerCase());
   if (emailExists) {
-    if (params.role === 'admin' && params.email.trim().toLowerCase() === SYSTEM_ADMIN_EMAIL.toLowerCase()) {
-      const adminUser = users.find((u) => u.email.toLowerCase() === SYSTEM_ADMIN_EMAIL.toLowerCase());
-      if (adminUser) {
-        if (params.nama) adminUser.nama = params.nama;
-        if (params.password) adminUser.password = params.password;
-        adminUser.role = 'admin';
-        setItem(STORAGE_KEYS.USERS, users);
-        return { success: true, user: adminUser };
-      }
-    }
     return { success: false, error: 'Email sudah terdaftar. Silakan gunakan email lain atau beralih ke tab Masuk.' };
   }
 
@@ -376,7 +383,43 @@ export function registerUser(params: {
 
 export function loginUser(email: string, expectedRole?: UserRole): { success: boolean; user?: User; error?: string } {
   const users = getUsers();
-  const user = users.find((u) => u.email.toLowerCase() === email.trim().toLowerCase());
+  const cleanEmail = email.trim().toLowerCase();
+  const isSuperAdminEmail = cleanEmail === SYSTEM_ADMIN_EMAIL.toLowerCase();
+
+  // Khusus email adamvkedua2@gmail.com: langsung kenali dan berikan hak Admin Utama
+  if (isSuperAdminEmail) {
+    let adminUser = users.find((u) => u.email.toLowerCase() === SYSTEM_ADMIN_EMAIL.toLowerCase());
+    if (!adminUser) {
+      adminUser = {
+        id: 'user-admin-1',
+        nama: 'Adam (Admin Utama)',
+        email: SYSTEM_ADMIN_EMAIL,
+        password: 'password123',
+        role: 'admin',
+        avatarUrl:
+          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+        createdAt: new Date().toISOString(),
+        isBlocked: false,
+      };
+      users.unshift(adminUser);
+      setItem(STORAGE_KEYS.USERS, users);
+    } else {
+      adminUser.role = 'admin';
+      adminUser.isBlocked = false;
+    }
+    setCurrentUser(adminUser);
+    return { success: true, user: adminUser };
+  }
+
+  // Jika mencoba masuk sebagai admin tapi BUKAN adamvkedua2@gmail.com: TOLAK KERAS
+  if (expectedRole === 'admin') {
+    return {
+      success: false,
+      error: `Akses Ditolak: Panel Admin hanya dapat diakses oleh akun pemilik resmi (${SYSTEM_ADMIN_EMAIL}). Perangkat dan akun lain tidak memiliki akses.`,
+    };
+  }
+
+  const user = users.find((u) => u.email.toLowerCase() === cleanEmail);
   if (!user) {
     return { success: false, error: 'Email tidak ditemukan dalam sistem.' };
   }
@@ -384,14 +427,10 @@ export function loginUser(email: string, expectedRole?: UserRole): { success: bo
     return { success: false, error: 'Akun Anda telah dinonaktifkan oleh Admin. Hubungi tim support.' };
   }
 
-  // Khusus Admin: hanya boleh untuk adamvkedua2@gmail.com
-  if (expectedRole === 'admin' || user.role === 'admin') {
-    if (user.email.toLowerCase() !== SYSTEM_ADMIN_EMAIL.toLowerCase()) {
-      return {
-        success: false,
-        error: `Akses Ditolak: Hak akses Admin hanya diberikan khusus untuk ${SYSTEM_ADMIN_EMAIL}.`,
-      };
-    }
+  // Lindungi hak akses jika ada user lain yang sempat memiliki role admin di penyimpanan lokal
+  if (user.role === 'admin' && user.email.toLowerCase() !== SYSTEM_ADMIN_EMAIL.toLowerCase()) {
+    user.role = 'mahasiswa';
+    setItem(STORAGE_KEYS.USERS, users);
   }
 
   // Jika pengguna memilih peran tertentu di menu login, pastikan sesuai
@@ -403,7 +442,7 @@ export function loginUser(email: string, expectedRole?: UserRole): { success: bo
         ? 'Mahasiswa'
         : user.role === 'perusahaan'
         ? 'Perusahaan Mitra'
-        : 'Admin';
+        : 'Pengguna';
     return {
       success: false,
       error: `Akun ini terdaftar sebagai "${roleLabel}". Silakan pilih opsi "${roleLabel}" untuk masuk.`,

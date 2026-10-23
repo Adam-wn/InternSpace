@@ -1,5 +1,6 @@
 import React from 'react';
 import { User } from '../types';
+import { SYSTEM_ADMIN_EMAIL } from '../services/storage';
 import {
   Compass,
   LayoutDashboard,
@@ -258,7 +259,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         )}
 
-        {role === 'admin' && (
+        {role === 'admin' && currentUser?.email?.toLowerCase() === SYSTEM_ADMIN_EMAIL.toLowerCase() && (
           <div>
             <div className="px-3 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
               Panel Kendali Admin
